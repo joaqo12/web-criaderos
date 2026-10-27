@@ -852,25 +852,29 @@ const SUPABASE_KEY = 'sb_publishable_Ugsbe8guq0pJFWiGiarZZQ__6JVV-Ix';
 const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
 async function cargarDatosDesdeSupabase() {
-  // 1. Cargar Configuración del Sitio (site_settings)
+  // 1. Cargar site_settings (nombre, subtítulo, títulos y WhatsApp)
   const { data: settings } = await supabaseClient.from('site_settings').select('*');
   if (settings && settings.length > 0) {
     const config = {};
-    settings.forEach(item => config[item.key] = item.value);
+    settings.forEach(item => {
+      config[item.key] = item.value;
+      
+      // Inyecta el texto en cualquier elemento con data-setting="key"
+      document.querySelectorAll(`[data-setting="${item.key}"]`).forEach(el => {
+        el.textContent = item.value;
+      });
+    });
 
-    // Actualizar datos globales si existen en tu JS
-    if (window.CABANA) {
-      window.CABANA.nombre = config.nombre || window.CABANA.nombre;
-      window.CABANA.sub = config.sub || window.CABANA.sub;
-      window.CABANA.wa = config.wa || window.CABANA.wa;
-      window.CABANA.tel = config.tel || window.CABANA.tel;
-      window.CABANA.email = config.email || window.CABANA.email;
+    // Actualiza el link de WhatsApp si existe
+    if (config.wa) {
+      const btnWa = document.getElementById('nav-wa');
+      if (btnWa) btnWa.href = `https://wa.me/${config.wa}`;
     }
   }
 
-  // 2. Cargar Animales (animals)
+  // 2. Cargar Animales
   const { data: animals } = await supabaseClient.from('animals').select('*');
-  if (animals && animals.length > 0) {
+  if (animals && animals.length > 0 && typeof ANIMALES !== 'undefined') {
     ANIMALES.length = 0;
     animals.forEach(a => {
       ANIMALES.push({
@@ -879,7 +883,7 @@ async function cargarDatosDesdeSupabase() {
         n: a.name,
         raza: a.breed,
         rp: a.rp,
-        img: a.main_image_url || (typeof IMG !== 'undefined' ? IMG.hero : ''),
+        img: a.main_image_url || '',
         fotos: a.gallery_urls || ['', ''],
         estado: a.status,
         precio: a.price,
@@ -890,9 +894,9 @@ async function cargarDatosDesdeSupabase() {
     });
   }
 
-  // 3. Cargar Lotes (lots)
+  // 3. Cargar Lotes
   const { data: lotsData } = await supabaseClient.from('lots').select('*');
-  if (lotsData && lotsData.length > 0 && window.LOTES) {
+  if (lotsData && lotsData.length > 0 && typeof LOTES !== 'undefined') {
     LOTES.length = 0;
     lotsData.forEach(l => {
       LOTES.push({
@@ -907,11 +911,12 @@ async function cargarDatosDesdeSupabase() {
     });
   }
 
-  // Re-renderizar las vistas
+  // Re-renderizar interfaces
   if (typeof renderAnimales === 'function') renderAnimales();
   if (typeof renderLotes === 'function') renderLotes();
-  if (typeof renderConfig === 'function') renderConfig();
 }
+
+  
 cargarDatosDesdeSupabase();
 </script>
 
