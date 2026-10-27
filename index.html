@@ -914,7 +914,7 @@ async function cargarDatosDesdeSupabase() {
   // 4. Contenido del inicio (textos e imágenes)
   const { data: st } = await supabaseClient.from('site_settings').select('*');
   const cfg = {};
-  (st || []).forEach(i => cfg[i.key] = i.value);
+  (st || []).forEach(i => cfg[i.key] = i.image_url || i.value);
 
   BRAND.nombre = cfg.site_title || cfg.nombre || BRAND.nombre;
   BRAND.sub = cfg.site_subtitle || cfg.sub || BRAND.sub;
@@ -922,7 +922,8 @@ async function cargarDatosDesdeSupabase() {
   if (cfg.about_title) ABOUT.titulo = cfg.about_title;
   if (cfg.about_text) ABOUT.texto = cfg.about_text;
   if (cfg.about_main) IMG.aboutMain = cfg.about_main;
-  if (cfg.about_second) IMG.aboutSecond = cfg.about_second;
+    if (cfg.about_second) IMG.aboutSecond = cfg.about_second;
+  if (cfg.hero_img) { PAGES.inicio.bg = cfg.hero_img; if (!location.hash || location.hash === '#/inicio') $('#hero-bg').style.backgroundImage = `url('${cfg.hero_img}')`; }
   const vals = [1, 2, 3].map(n => cfg['about_value_' + n]).filter(Boolean).map(v => v.split('|').map(x => x.trim()));
   if (vals.length) ABOUT.valores = vals;
 
