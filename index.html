@@ -911,7 +911,37 @@ async function cargarDatosDesdeSupabase() {
       ]);
     });
   }
+  // 4. Contenido del inicio (textos e imágenes)
+  const { data: st } = await supabaseClient.from('site_settings').select('*');
+  const cfg = {};
+  (st || []).forEach(i => cfg[i.key] = i.value);
 
+  BRAND.nombre = cfg.site_title || cfg.nombre || BRAND.nombre;
+  BRAND.sub = cfg.site_subtitle || cfg.sub || BRAND.sub;
+
+  if (cfg.about_title) ABOUT.titulo = cfg.about_title;
+  if (cfg.about_text) ABOUT.texto = cfg.about_text;
+  if (cfg.about_main) IMG.aboutMain = cfg.about_main;
+  if (cfg.about_second) IMG.aboutSecond = cfg.about_second;
+  const vals = [1, 2, 3].map(n => cfg['about_value_' + n]).filter(Boolean).map(v => v.split('|').map(x => x.trim()));
+  if (vals.length) ABOUT.valores = vals;
+
+  [['toros', 0], ['vientres', 1], ['terneros', 2]].forEach(([k, i]) => {
+    if (cfg[`card_${k}_img`]) HOME_CARDS[i].img = cfg[`card_${k}_img`];
+    if (cfg[`card_${k}_title`]) HOME_CARDS[i].t = cfg[`card_${k}_title`];
+    if (cfg[`card_${k}_text`]) HOME_CARDS[i].d = cfg[`card_${k}_text`];
+  });
+
+  const secCria = document.querySelector('#home-bento').closest('section');
+  if (cfg.cria_title) secCria.querySelector('h2').innerHTML = cfg.cria_title;
+  if (cfg.cria_text) secCria.querySelector('p').textContent = cfg.cria_text;
+  const secGal = document.querySelector('#home-gallery').closest('section');
+  if (cfg.gallery_title) secGal.querySelector('h2').innerHTML = cfg.gallery_title;
+
+  const { data: gal } = await supabaseClient.from('gallery').select('*').order('sort_order');
+  if (gal && gal.length) gal.forEach((g, i) => {
+    if (GALERIA[i]) { GALERIA[i].src = g.image_url || ''; if (g.label) GALERIA[i].l = g.label; }
+  });
     renderStatic();
   renderAnimales();
 }
