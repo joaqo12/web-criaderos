@@ -1,0 +1,918 @@
+<!DOCTYPE html>
+<html class="scroll-smooth" lang="es"><head>
+
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<meta name="theme-color" content="#1f3a2b"/>
+<title>Cabaña El Ombú</title>
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;1,400&amp;family=Inter:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet"/>
+<style>
+  /* ---------- Paleta: verde bosque + blanco hueso (+ latón como detalle) ---------- */
+  :root {
+    --bg: #f4f0e6;      /* hueso */
+    --bg2: #ebe6d9;     /* hueso oscuro (bandas) */
+    --card: #fbf9f3;    /* papel */
+    --line: #dcd5c3;
+    --ink: #1d2a22;     /* texto: verde casi negro */
+    --muted: #5d6b61;
+    --green: #1f3a2b;   /* verde bosque */
+    --green2: #2f5a42;
+    --sage: #8fa88f;
+    --sagepale: #dfe7da;
+    --brass: #a98a4d;
+    --brassdark: #8a6f36;
+  }
+  .on-dark { --ink: #f1ede2; --muted: #bccabd; --card: rgba(244,240,230,.07); --line: rgba(241,237,226,.17); }
+
+  html, body { margin: 0; padding: 0; background: var(--bg); color: var(--ink); font-family: 'Montserrat', 'Inter', system-ui, -apple-system, sans-serif; }
+  body { overscroll-behavior: none; }
+  ::-webkit-scrollbar { display: none; }
+  ::selection { background: #2f5a42; color: #f4f0e6; }
+  select option { background: #fbf9f3; color: #1d2a22; }
+  details > summary { list-style: none; }
+  details > summary::-webkit-details-marker { display: none; }
+  details[open] .chevron { transform: rotate(180deg); }
+  .page { animation: pageIn .35s ease both; }
+  @keyframes pageIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+  #hero { transition: min-height .4s ease; }
+  #hero-bg { transition: background-image .3s ease; }
+
+  .ink { color: var(--ink); }
+  .muted { color: var(--muted); }
+  .brass { color: var(--brassdark); }
+  .on-dark .brass { color: #d9bf85; }
+  .accent-text { color: var(--green2); font-weight: 300; }
+  .on-dark .accent-text { color: #c5dbb9; }
+
+  .eyebrow { display: inline-flex; align-items: center; gap: 10px; font-size: 11px; letter-spacing: .2em; text-transform: uppercase; font-weight: 700; color: var(--brassdark); }
+  .eyebrow::before { content: ''; width: 28px; height: 1px; background: linear-gradient(90deg, transparent, currentColor); }
+  .on-dark .eyebrow { color: #d9bf85; }
+
+  /* Botones */
+  .btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; padding: 12px 24px; border-radius: 6px; font-size: 13px; font-weight: 700; letter-spacing: .03em; transition: all .25s ease; white-space: nowrap; }
+  .btn:hover { transform: translateY(-1px); }
+  .btn-green { background: linear-gradient(135deg, #3a7355, #1f3a2b); color: #f4f0e6; border: 1px solid rgba(31,58,43,.7); box-shadow: 0 10px 24px -12px rgba(31,58,43,.8); }
+  .btn-green:hover { filter: brightness(1.1); }
+  .btn-bone { background: #f4f0e6; color: #1f3a2b; box-shadow: 0 10px 24px -12px rgba(0,0,0,.5); }
+  .btn-bone:hover { background: #fff; }
+  .btn-outline { border: 1px solid rgba(31,58,43,.4); color: #1f3a2b; background: transparent; font-weight: 600; }
+  .btn-outline:hover { background: rgba(31,58,43,.07); border-color: #1f3a2b; }
+  .btn-outline-light { border: 1px solid rgba(244,240,230,.45); color: #f4f0e6; background: rgba(255,255,255,.06); backdrop-filter: blur(4px); font-weight: 600; }
+  .btn-outline-light:hover { background: rgba(255,255,255,.15); border-color: rgba(244,240,230,.8); }
+  .btn-sm { padding: 10px 18px; font-size: 12.5px; border-radius: 999px; }
+
+  /* Tarjetas */
+  .panel { position: relative; border-radius: 12px; border: 1px solid var(--line); background: var(--card);
+           box-shadow: 0 1px 0 rgba(255,255,255,.8) inset, 0 10px 28px -18px rgba(31,58,43,.38);
+           transition: transform .25s, border-color .25s, box-shadow .25s; }
+  .panel::before { content: ''; position: absolute; left: 0; right: 0; top: 0; height: 3px; border-radius: 12px 12px 0 0; background: linear-gradient(90deg, #2f5a42, #8fa88f 60%, #a98a4d); opacity: .9; }
+  .panel:hover { transform: translateY(-2px); border-color: #a9bba7; box-shadow: 0 20px 44px -22px rgba(31,58,43,.55); }
+  .panel-static:hover { transform: none; border-color: var(--line); box-shadow: 0 1px 0 rgba(255,255,255,.8) inset, 0 10px 28px -18px rgba(31,58,43,.38); }
+  .on-dark .panel { box-shadow: none; }
+  .on-dark .panel:hover { border-color: rgba(217,191,133,.5); box-shadow: 0 20px 44px -22px rgba(0,0,0,.6); }
+  .on-dark .panel-static:hover { border-color: var(--line); box-shadow: none; }
+
+  .ibox { width: 40px; height: 40px; border-radius: 8px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; color: #2f5a42; background: #dfe7da; border: 1px solid #c3d1bd; }
+  .on-dark .ibox { color: #e6dfc8; background: rgba(241,237,226,.1); border-color: rgba(241,237,226,.25); }
+
+  /* Bandas */
+  .band-bg2 { background: var(--bg2); border-block: 1px solid var(--line); }
+  .band-green { background: radial-gradient(70% 120% at 0% 0%, rgba(143,168,143,.24), transparent 60%), radial-gradient(50% 90% at 100% 100%, rgba(169,138,77,.18), transparent 60%), linear-gradient(180deg, #26442f, #1a3023); }
+  .hairline { height: 1px; background: linear-gradient(90deg, transparent, rgba(217,191,133,.6), transparent); }
+  .hero-wash { background: linear-gradient(90deg, rgba(16,35,26,.84) 0%, rgba(16,35,26,.5) 45%, rgba(16,35,26,.12) 100%), radial-gradient(50% 70% at 100% 0%, rgba(169,138,77,.22), transparent 60%); }
+  .cta-banner { border-radius: 16px; border: 1px solid rgba(217,191,133,.42); box-shadow: 0 26px 64px -26px rgba(16,35,26,.8);
+                background: radial-gradient(60% 130% at 100% 0%, rgba(169,138,77,.3), transparent 60%), linear-gradient(135deg, #34674c 0%, #1f3a2b 55%, #14261c 100%); }
+
+  /* Barra fija: transparente sobre el hero, hueso al hacer scroll */
+  #topbar { background: linear-gradient(180deg, rgba(16,35,26,.6), rgba(16,35,26,.18)); backdrop-filter: blur(8px); border-bottom: 1px solid rgba(241,237,226,.18); transition: background .3s, box-shadow .3s, border-color .3s; }
+  #topbar .brand-name { color: #f4f0e6; }
+  #topbar .brand-sub { color: #d9bf85; }
+  #topbar .nav-link { color: rgba(244,240,230,.8); }
+  #topbar .nav-link:hover { color: #fff; background: rgba(255,255,255,.12); }
+  #topbar .nav-active { color: #fff; background: rgba(244,240,230,.18); box-shadow: inset 0 0 0 1px rgba(244,240,230,.4); }
+  #topbar .btn-nav { background: #f4f0e6; color: #1f3a2b; }
+  #topbar.is-solid { background: rgba(244,240,230,.9); backdrop-filter: blur(14px); border-bottom-color: rgba(31,58,43,.14); box-shadow: 0 10px 30px -20px rgba(31,58,43,.6); }
+  #topbar.is-solid .brand-name { color: #1f3a2b; }
+  #topbar.is-solid .brand-sub { color: #8a6f36; }
+  #topbar.is-solid .nav-link { color: #4a5b50; }
+  #topbar.is-solid .nav-link:hover { color: #1f3a2b; background: rgba(31,58,43,.08); }
+  #topbar.is-solid .nav-active { color: #1f3a2b; background: rgba(31,58,43,.1); box-shadow: inset 0 0 0 1px rgba(31,58,43,.28); }
+  #topbar.is-solid .btn-nav { background: linear-gradient(135deg, #3a7355, #1f3a2b); color: #f4f0e6; }
+  .nav-link { padding: 8px 16px; border-radius: 999px; transition: all .2s; }
+  .logo-fb { background: linear-gradient(135deg, #3a7355, #1f3a2b); border: 1px solid rgba(217,191,133,.6); color: #f4f0e6; }
+
+  .chip { padding: 8px 16px; border-radius: 999px; font-size: 12.5px; font-weight: 600; border: 1px solid #cdc5b0; color: var(--muted); transition: all .2s; }
+  .chip:hover { color: #1f3a2b; border-color: #2f5a42; background: rgba(47,90,66,.07); }
+  .chip-on { color: #f4f0e6; background: linear-gradient(135deg, #3a7355, #1f3a2b); border-color: #1f3a2b; box-shadow: 0 8px 18px -10px rgba(31,58,43,.8); }
+  .chip-on:hover { color: #f4f0e6; background: linear-gradient(135deg, #3a7355, #1f3a2b); }
+
+  .tag { background: rgba(251,249,243,.93); color: #2f5a42; border: 1px solid rgba(31,58,43,.18); font-size: 10px; letter-spacing: .12em; text-transform: uppercase; font-weight: 700; padding: 3px 10px; border-radius: 999px; backdrop-filter: blur(6px); }
+  .st { display: inline-block; font-size: 10px; letter-spacing: .12em; text-transform: uppercase; font-weight: 700; padding: 3px 10px; border-radius: 999px; border: 1px solid; }
+  .st-ok   { background: #e1ecd9; color: #2b5a3f; border-color: #b4cca9; }
+  .st-res  { background: #f2e7c9; color: #7a5f22; border-color: #d9c288; }
+  .st-plan { background: #ece3d8; color: #6a4a38; border-color: #cfbca9; }
+
+  .input { margin-top: 8px; width: 100%; background: var(--card); border: 1px solid #d3ccb8; border-radius: 8px; padding: 12px 16px; font-size: 13.5px; color: var(--ink); transition: border-color .2s, box-shadow .2s; }
+  .input::placeholder { color: #8d9990; }
+  .input:focus { outline: none; border-color: #2f5a42; box-shadow: 0 0 0 3px rgba(47,90,66,.16); }
+
+  /* Placeholders de imagen */
+  .ph { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px; text-align: center; padding: 12px;
+        background: radial-gradient(120% 90% at 50% 0%, rgba(143,168,143,.4), transparent 60%),
+                    repeating-linear-gradient(135deg, rgba(31,58,43,.05) 0 12px, transparent 12px 24px),
+                    linear-gradient(160deg, #e4e9db, #d1d9c5);
+        box-shadow: inset 0 0 0 1px rgba(31,58,43,.14); }
+  .ph .material-symbols-outlined { font-size: 34px; font-weight: 200; color: rgba(47,90,66,.55); }
+  .ph b { font-size: 10px; letter-spacing: .16em; text-transform: uppercase; font-weight: 700; color: #5d6b61; }
+  .ph small { font-size: 10px; letter-spacing: .08em; color: #7d8b80; }
+  .ph-dark { background: radial-gradient(120% 90% at 50% 0%, rgba(143,168,143,.22), transparent 60%),
+                         repeating-linear-gradient(135deg, rgba(255,255,255,.035) 0 12px, transparent 12px 24px),
+                         linear-gradient(160deg, #2c4a38, #14261c);
+             box-shadow: inset 0 0 0 1px rgba(241,237,226,.12); }
+  .ph-dark .material-symbols-outlined { color: rgba(217,191,133,.6); }
+  .ph-dark b { color: #b4c4b6; }
+  .ph-dark small { color: #7f9585; }
+  .ph-img { position: absolute; inset: 0; background-size: cover; background-position: center; }
+</style>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+  tailwind.config = { theme: { extend: { fontFamily: { sans: ['Montserrat', 'Inter', 'system-ui', 'sans-serif'] } } } }
+</script>
+</head>
+<body class="font-sans antialiased">
+
+<!-- ============ BARRA FIJA ============ -->
+<header id="topbar" class="fixed top-0 inset-x-0 z-50">
+  <div class="max-w-7xl mx-auto px-6 sm:px-8 py-3 flex flex-wrap items-center justify-between gap-x-6 gap-y-2">
+    <a class="flex items-center gap-3.5" href="#/inicio">
+      <img alt="Logo" class="logo h-9 w-auto object-contain"/>
+      <span class="logo-fb hidden w-9 h-9 shrink-0 rounded-md items-center justify-center font-sans font-extrabold text-[12px] tracking-wider"></span>
+      <div class="flex flex-col">
+        <span class="brand-name font-sans text-[15px] tracking-tight font-bold leading-snug uppercase"></span>
+        <span class="brand-sub text-[10px] tracking-[0.18em] uppercase font-semibold"></span>
+      </div>
+    </a>
+    <div id="nav-links" class="order-3 lg:order-2 w-full lg:w-auto flex items-center justify-start lg:justify-center gap-1.5 sm:gap-2 text-[13px] font-medium tracking-wide overflow-x-auto whitespace-nowrap"></div>
+    <a id="nav-wa" class="btn btn-nav btn-sm order-2 lg:order-3" target="_blank" rel="noopener">
+      <span class="material-symbols-outlined text-[16px] font-light">chat</span>
+      <span class="sm:hidden">WhatsApp</span><span class="hidden sm:inline">Escribinos por WhatsApp</span>
+    </a>
+  </div>
+</header>
+
+<!-- ============ HERO ============ -->
+<section id="hero" class="on-dark relative w-full overflow-hidden min-h-[480px] flex flex-col justify-between" style="background:#14261c">
+  <div class="absolute inset-0">
+    <div class="ph ph-dark"><span class="material-symbols-outlined">image</span><b>Imagen de portada</b><small>1920 × 1080 px · 16:9</small></div>
+    <div id="hero-bg" class="absolute inset-0 bg-cover bg-center filter contrast-[1.05] brightness-[0.92]"></div>
+    <div class="hero-wash absolute inset-0"></div>
+  </div>
+  <div class="relative z-20 max-w-7xl mx-auto px-6 sm:px-8 pt-40 sm:pt-36 lg:pt-32 pb-16 w-full grow flex flex-col justify-center">
+    <div class="max-w-3xl space-y-5">
+      <div class="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full backdrop-blur-md" style="border:1px solid rgba(217,191,133,.5);background:rgba(16,35,26,.5)">
+        <span class="w-1.5 h-1.5 rounded-full" style="background:#d9bf85"></span>
+        <span id="hero-badge" class="text-[11px] tracking-[0.14em] uppercase font-bold" style="color:#ecd9a8"></span>
+      </div>
+      <h1 id="hero-title" class="ink font-sans text-4xl sm:text-5xl leading-[1.08] font-bold tracking-tight"></h1>
+      <p id="hero-sub" class="text-base sm:text-lg leading-relaxed max-w-2xl" style="color:#e3ded0"></p>
+      <div id="hero-ctas" class="pt-2 flex flex-wrap items-center gap-3.5 hidden">
+        <a class="btn btn-bone" href="#/animales"><span class="material-symbols-outlined text-[17px] font-light">pets</span>Ver mis animales</a>
+        <a class="btn btn-outline-light" href="#/contacto"><span class="material-symbols-outlined text-[17px] font-light" style="color:#d9bf85">calendar_month</span>Coordinar una visita</a>
+      </div>
+    </div>
+  </div>
+  <div class="hairline relative z-20"></div>
+</section>
+
+<!-- ============ PÁGINAS ============ -->
+<main class="w-full">
+
+<!-- INICIO -->
+<div class="page" data-page="inicio" hidden>
+  <section class="band-bg2">
+    <div class="max-w-7xl mx-auto px-6 sm:px-8 py-10">
+      <p class="text-center text-[11px] uppercase tracking-[0.2em] brass font-bold mb-6">Registros &amp; respaldo</p>
+      <div id="home-logos" class="grid grid-cols-2 lg:grid-cols-4 gap-3"></div>
+    </div>
+  </section>
+
+  <section class="max-w-7xl mx-auto px-6 sm:px-8 pt-24 pb-16 w-full">
+    <div class="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-10">
+      <div class="space-y-3">
+        <span class="eyebrow">Qué criamos</span>
+        <h2 class="ink font-sans text-3xl sm:text-4xl lg:text-5xl font-bold tracking-tight leading-[1.1]">Hacienda criada a campo,<br class="hidden sm:block"/> <span class="accent-text">con trato directo del productor.</span></h2>
+      </div>
+      <p class="muted text-[13.5px] max-w-sm leading-relaxed">Toros, vientres, vaquillonas y terneros: animales rústicos, mansos y con la documentación al día.</p>
+    </div>
+    <div id="home-bento" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 lg:auto-rows-[270px] gap-5"></div>
+  </section>
+
+  <!-- Sobre nosotros -->
+  <section class="band-green on-dark">
+    <div class="max-w-7xl mx-auto px-6 sm:px-8 py-20 w-full">
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-10 lg:gap-16 items-center">
+        <div class="relative pb-10 pr-6 sm:pr-10">
+          <div id="about-main" class="relative aspect-[5/4] lg:aspect-[4/5] rounded-xl overflow-hidden" style="border:1px solid rgba(217,191,133,.4)"></div>
+          <div id="about-second" class="absolute bottom-0 right-0 w-[42%] aspect-square rounded-xl overflow-hidden shadow-[0_16px_40px_rgba(0,0,0,0.4)]" style="border:5px solid #f4f0e6"></div>
+        </div>
+        <div class="space-y-7">
+          <div class="space-y-3">
+            <span class="eyebrow">Sobre nosotros</span>
+            <h2 id="about-title" class="ink font-sans text-3xl sm:text-4xl font-bold tracking-tight leading-[1.1]"></h2>
+            <p id="about-text" class="muted text-[14.5px] leading-relaxed"></p>
+          </div>
+          <ul id="about-values" class="space-y-3 text-[13.5px] ink"></ul>
+          <div class="flex flex-wrap gap-3 pt-1">
+            <a href="#/animales" class="btn btn-bone">Conocer los animales<span class="material-symbols-outlined text-[17px]">arrow_forward</span></a>
+            <a href="#/contacto" class="btn btn-outline-light">Visitar el campo</a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="max-w-7xl mx-auto px-6 sm:px-8 pt-24 pb-4 w-full">
+    <div class="mb-8 space-y-3">
+      <span class="eyebrow">Galería</span>
+      <h2 class="ink font-sans text-3xl sm:text-4xl font-bold tracking-tight">Un día <span class="accent-text">en el campo</span></h2>
+    </div>
+    <div id="home-gallery" class="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 auto-rows-[170px] sm:auto-rows-[220px]"></div>
+  </section>
+  <div data-cta="venta"></div>
+</div>
+
+<!-- MIS ANIMALES -->
+<div class="page" data-page="animales" hidden>
+  <section class="max-w-7xl mx-auto px-6 sm:px-8 pt-16 w-full">
+    <div id="animales-stats" class="grid grid-cols-2 lg:grid-cols-4 gap-4"></div>
+  </section>
+
+  <section class="max-w-7xl mx-auto px-6 sm:px-8 py-14 w-full">
+    <div class="flex flex-col gap-6 pb-8 mb-8" style="border-bottom:1px solid var(--line)">
+      <div class="flex flex-col md:flex-row md:items-end justify-between gap-4">
+        <div class="space-y-3">
+          <span class="eyebrow">El plantel &amp; la venta</span>
+          <h2 class="ink font-sans text-3xl sm:text-4xl lg:text-5xl font-bold tracking-tight leading-[1.1]">Todos mis <span class="accent-text">animales</span></h2>
+        </div>
+        <p class="muted text-[13.5px] max-w-md leading-relaxed">Tocá "Ver ficha" para ver fotos, pedigrí, sanidad y todos los datos de cada animal. Los precios se informan por consulta directa.</p>
+      </div>
+      <div class="flex flex-col lg:flex-row lg:items-center gap-4 lg:gap-10">
+        <div class="flex flex-wrap items-center gap-3"><span class="text-[11px] uppercase tracking-[0.16em] brass font-bold">Categoría</span><div id="f-cat" class="flex flex-wrap gap-2"></div></div>
+        <div class="flex flex-wrap items-center gap-3"><span class="text-[11px] uppercase tracking-[0.16em] brass font-bold">Estado</span><div id="f-estado" class="flex flex-wrap gap-2"></div></div>
+      </div>
+    </div>
+    <div id="animales-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"></div>
+    <p id="animales-vacio" class="hidden text-center muted py-16 text-[14px]">No hay animales con ese filtro.</p>
+  </section>
+
+  <section class="band-bg2">
+    <div class="max-w-7xl mx-auto px-6 sm:px-8 py-20 w-full">
+      <div class="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-8">
+        <div class="space-y-3">
+          <span class="eyebrow">Resumen por lote</span>
+          <h2 class="ink font-sans text-2xl sm:text-3xl lg:text-4xl font-bold tracking-tight">Lotes <span class="accent-text">en venta</span></h2>
+        </div>
+        <p class="muted text-[13px] max-w-sm leading-relaxed">Se actualiza con los filtros de arriba. Los precios se informan al consultar, según el día y la cantidad.</p>
+      </div>
+      <div class="panel panel-static overflow-x-auto">
+        <table class="w-full text-left text-[13px] min-w-[780px]">
+          <thead>
+            <tr class="text-[11px] uppercase tracking-[0.14em] brass" style="border-bottom:1px solid var(--line)">
+              <th class="px-5 py-4 font-bold">Lote</th><th class="px-5 py-4 font-bold">Categoría</th><th class="px-5 py-4 font-bold">Raza</th>
+              <th class="px-5 py-4 font-bold">Cantidad</th><th class="px-5 py-4 font-bold">Peso Prom.</th><th class="px-5 py-4 font-bold">Estado</th><th class="px-5 py-4"></th>
+            </tr>
+          </thead>
+          <tbody id="lotes-body"></tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <section class="max-w-7xl mx-auto px-6 sm:px-8 py-20 w-full">
+    <div class="mb-10 space-y-3">
+      <span class="eyebrow">Paso a paso</span>
+      <h2 class="ink font-sans text-2xl sm:text-3xl lg:text-4xl font-bold tracking-tight">Cómo <span class="accent-text">comprar</span></h2>
+    </div>
+    <ol id="pasos" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5"></ol>
+  </section>
+
+  <section class="band-green on-dark">
+    <div class="max-w-7xl mx-auto px-6 sm:px-8 py-20 w-full">
+      <div class="mb-10 space-y-3">
+        <span class="eyebrow">Sin letra chica</span>
+        <h2 class="ink font-sans text-2xl sm:text-3xl lg:text-4xl font-bold tracking-tight">Condiciones <span class="accent-text">de venta</span></h2>
+      </div>
+      <div id="condiciones" class="grid grid-cols-1 md:grid-cols-3 gap-6"></div>
+    </div>
+  </section>
+
+  <section class="max-w-4xl mx-auto px-6 sm:px-8 py-20 w-full">
+    <div class="pb-8 mb-6 space-y-3" style="border-bottom:1px solid var(--line)">
+      <span class="eyebrow">Antes de comprar</span>
+      <h2 class="ink font-sans text-2xl sm:text-3xl font-bold tracking-tight">Preguntas frecuentes</h2>
+    </div>
+    <div id="faq" class="space-y-3"></div>
+  </section>
+  <div data-cta="visita"></div>
+</div>
+
+<!-- CONTACTO -->
+<div class="page" data-page="contacto" hidden>
+  <section class="max-w-7xl mx-auto px-6 sm:px-8 py-20 w-full">
+    <div class="flex flex-col md:flex-row md:items-end justify-between pb-8 gap-4 mb-8" style="border-bottom:1px solid var(--line)">
+      <div class="space-y-3">
+        <span class="eyebrow">Atención directa</span>
+        <h2 class="ink font-sans text-2xl sm:text-3xl lg:text-4xl font-bold tracking-tight">Canales de <span class="accent-text">contacto</span></h2>
+      </div>
+      <p id="horario-top" class="muted text-[13.5px] max-w-md leading-relaxed"></p>
+    </div>
+    <div id="canales" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5"></div>
+  </section>
+
+  <section class="band-bg2">
+    <div class="max-w-7xl mx-auto px-6 sm:px-8 py-20 grid grid-cols-1 lg:grid-cols-5 gap-8">
+      <div class="lg:col-span-3 panel panel-static p-7 sm:p-9">
+        <span class="eyebrow">Consulta</span>
+        <h2 class="ink font-sans text-2xl sm:text-3xl font-bold tracking-tight mt-3 mb-2">Envianos tu consulta</h2>
+        <p class="muted text-[13.5px] leading-relaxed mb-7">Completá los datos y se abrirá WhatsApp con el mensaje listo para enviar.</p>
+        <form id="form-consulta" class="space-y-5">
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-5">
+            <label class="block"><span class="text-[11px] uppercase tracking-[0.14em] brass font-bold">Nombre y Apellido</span>
+              <input id="nombre" type="text" required class="input" placeholder="Ej: Martín Gómez"/></label>
+            <label class="block"><span class="text-[11px] uppercase tracking-[0.14em] brass font-bold">Localidad</span>
+              <input id="campo" type="text" class="input" placeholder="Ej: Pergamino, Buenos Aires"/></label>
+          </div>
+          <label class="block"><span class="text-[11px] uppercase tracking-[0.14em] brass font-bold">Me interesa</span>
+            <select id="interes" class="input">
+              <option>Toros / reproductores</option><option>Vientres</option><option>Vaquillonas</option>
+              <option>Terneros / recría</option><option>Coordinar una visita</option><option>Otra consulta</option>
+            </select></label>
+          <label class="block"><span class="text-[11px] uppercase tracking-[0.14em] brass font-bold">Mensaje</span>
+            <textarea id="mensaje" rows="4" class="input" placeholder="Contanos qué buscás, cuántos animales y para cuándo."></textarea></label>
+          <button type="submit" class="btn btn-green"><span class="material-symbols-outlined text-[17px] font-light">chat</span>Enviar por WhatsApp</button>
+        </form>
+      </div>
+      <div class="lg:col-span-2 panel panel-static p-5 flex flex-col gap-5">
+        <div id="mapa" class="relative aspect-[16/10] rounded-md overflow-hidden"></div>
+        <div class="px-2 pb-2 space-y-3">
+          <span class="eyebrow">Cómo llegar</span>
+          <h2 class="ink font-sans text-xl font-bold tracking-tight">Visitas al campo</h2>
+          <p id="dir-texto" class="muted text-[13.5px] leading-relaxed"></p>
+          <p class="text-[12.5px] font-semibold flex items-center gap-1.5" style="color:#2f5a42"><span class="material-symbols-outlined text-[16px] brass">schedule</span><span id="horario-card"></span></p>
+          <p class="muted text-[12px]">Recomendamos avisar antes para recibirte con los animales listos.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="max-w-7xl mx-auto px-6 sm:px-8 py-20 w-full">
+    <div id="contacto-dif" class="grid grid-cols-1 md:grid-cols-3 gap-6"></div>
+  </section>
+</div>
+
+</main>
+
+<!-- ============ FICHA (modal) ============ -->
+<div id="modal" class="fixed inset-0 z-[60] hidden items-center justify-center p-4 sm:p-6" role="dialog" aria-modal="true">
+  <div id="modal-bg" class="absolute inset-0 backdrop-blur-sm" style="background:rgba(16,35,26,.72)"></div>
+  <div id="modal-body" class="relative w-full max-w-5xl max-h-[92vh] overflow-y-auto panel panel-static p-5 sm:p-8" style="background:#fbf9f3"></div>
+</div>
+
+<!-- ============ FOOTER ============ -->
+<footer class="on-dark relative w-full pt-16 pb-10" style="background:#14261c">
+  <div class="hairline absolute top-0 inset-x-0"></div>
+  <div class="max-w-7xl mx-auto px-6 sm:px-8">
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-10 pb-12">
+      <div class="space-y-4">
+        <div class="flex items-center gap-3">
+          <img alt="Logo" class="logo h-6 w-auto object-contain"/>
+          <span class="logo-fb hidden w-7 h-7 shrink-0 rounded-md items-center justify-center font-sans font-extrabold text-[10px] tracking-wider"></span>
+          <span class="brand-name ink font-sans text-base font-bold uppercase tracking-wider"></span>
+        </div>
+        <p id="footer-blurb" class="muted text-[13px] leading-relaxed"></p>
+      </div>
+      <div class="space-y-3">
+        <h4 class="text-[11px] font-bold brass uppercase tracking-[0.16em]">Navegación</h4>
+        <ul id="footer-nav" class="space-y-2 text-[13px] muted"></ul>
+      </div>
+      <div class="space-y-3">
+        <h4 class="text-[11px] font-bold brass uppercase tracking-[0.16em]">Ubicación</h4>
+        <p id="footer-dir" class="muted text-[13px] leading-relaxed"></p>
+      </div>
+      <div class="space-y-3">
+        <h4 class="text-[11px] font-bold brass uppercase tracking-[0.16em]">Contacto</h4>
+        <p id="footer-contacto" class="muted text-[13px] leading-relaxed"></p>
+        <div class="pt-2"><a class="inline-flex items-center text-[12px] font-bold tracking-wide hover:text-white" style="color:#e6d3a1" href="#/contacto">Consultar ahora →</a></div>
+      </div>
+    </div>
+    <div class="pt-8 flex flex-col sm:flex-row justify-between items-center gap-3 text-[12px]" style="border-top:1px solid rgba(241,237,226,.14);color:#8fa292">
+      <span id="footer-copy"></span>
+      <span>Cría de hacienda con registro y trato directo</span>
+    </div>
+  </div>
+</footer>
+
+<script>
+/* ============================================================
+   DATOS — editá acá todo el contenido del sitio
+   ============================================================ */
+const BRAND = {
+  nombre: 'Cabaña El Ombú',
+  sub: 'Cría de hacienda',
+  siglas: 'EO',
+  wa: '5491100000000',                 // sólo números, con código de país
+  tel: '+54 9 11 0000-0000',
+  telHref: 'tel:+5491100000000',
+  email: 'contacto@cabanaelombu.com',
+  dir: ['Ruta Provincial 41, Km 84', 'San Antonio de Areco, Buenos Aires'],
+  horario: 'Lunes a sábado de 08:00 a 18:00 hs'
+};
+
+/* Imágenes: ruta o URL. Vacío ('') = placeholder con el tamaño sugerido */
+const IMG = {
+  logo: '',
+  hero: 'https://lh3.googleusercontent.com/aida-public/AB6AXuDvHuXar001-xQ7gxbEVsJc_uhzu91Xc0DyvfAa5badl9qwTERQGNpSjw4UulC7Sfo5ubsFdtRht8S-djmpqMoTplVs2qtAaEqxuUH3_2siZitylTCIUMUGnsngaO6G3URDlgG8QnyFcwZ2EAXbxUXT5G6E_WjZK5vfDgVGhtlTLw-JSuOnrmizx6zVzcisgUZ0TDW4gG9z7keXcZv0jkv4bvYolIA3GPZAiL0q50tlx9yS-QMMuYeiBA',
+  toros: 'https://lh3.googleusercontent.com/aida-public/AB6AXuBd5yVKuLgKPZU9-eIX-R3q07tK63qFe07urPJsJYYJyCR3BjZtSQ1Jk8miz-IHSwUT4Fnaw65O7vtPV9ARTaO8W6JFqlIFyVuYF3EDmsA9rAyvn_vo8R5cgYB1IT3gXXlpbyeUb5lTv-YaMKBiLRc2GcqDUNWHJ7nPNeNbDOhTf3E4RDhOv_LEaM2O3xIL6c3Yib3V0GjGoxpHDcp2a7qGWCX_YqhwR74cxfaWkCjGwo-Dfaxqqvj_MA',
+  remate: 'https://lh3.googleusercontent.com/aida-public/AB6AXuCoMjM50sTigPbjsBHH-q1c9AQUAVSURaoQ5nSKL-HN43CZolfLiMJC_BKa8G54007jIq8U7aX7OiYygiFi3dFOFrmRbfNK_LWRuxkV_T148J0-WuDlYKQXgxAX69FY2xPoIda4-bHLTz4TpgGs8pQZikcL8U3Ld5ZwB4LH6l7iNnPuTtTk54SVYQSXUcBPiXgeTYf7GlCAbk8ycy686b8l-iW981WFoYmdYmY6a-w06kS1mWFiwbWG0g',
+  vientres: '', vaquillonas: '', terneros: '',
+  aboutMain: '', aboutSecond: '', mapa: ''
+};
+
+const PAGES = {
+  'inicio': { nav: 'Inicio', title: BRAND.nombre, bg: IMG.hero, home: true,
+    badge: 'Cabaña familiar · Cría a campo',
+    h1: 'Cría con criterio.<br/><span class="accent-text tracking-normal">Animales de confianza.</span>',
+    sub: 'Toros, vientres y vaquillonas criados a campo, con registro al día y trato directo del productor.' },
+  'animales': { nav: 'Mis Animales', title: 'Mis Animales', bg: IMG.toros,
+    badge: 'Plantel & Venta',
+    h1: 'Mis Animales.<br/><span class="accent-text tracking-normal">Todo a la vista, sin vueltas.</span>',
+    sub: 'Fichas completas de cada animal: fotos, pedigrí, sanidad y disponibilidad, para decidir con tranquilidad.' },
+  'contacto': { nav: 'Contacto', title: 'Contacto', bg: IMG.hero,
+    badge: 'Hablemos',
+    h1: 'Contacto.<br/><span class="accent-text tracking-normal">Vení a ver los animales.</span>',
+    sub: 'Consultas, precios y visitas: respondemos personalmente cada mensaje.' }
+};
+
+/* Mosaico del inicio */
+const HOME_CARDS = [
+  { to: 'animales', img: IMG.toros, label: 'Foto de toros', size: '1600 × 1600 px · 1:1', span: 'md:col-span-2 lg:row-span-2', big: true, tag: 'Reproductores', t: 'Toros', d: 'Reproductores mansos y de buena estructura, listos para servicio, con pedigrí y documentación.', cta: 'Ver toros' },
+  { to: 'animales', img: IMG.vientres, label: 'Foto de vientres', size: '800 × 800 px · 1:1', span: '', tag: 'Hacienda de cría', t: 'Vientres y vaquillonas', d: 'Madres probadas y vaquillonas para servicio.', cta: 'Ver hacienda' },
+  { to: 'animales', img: IMG.terneros, label: 'Foto de terneros', size: '800 × 800 px · 1:1', span: '', tag: 'Recría', t: 'Terneros', d: 'Terneros destetados, sanos y bien criados.', cta: 'Ver lotes' }
+];
+
+/* Logos de respaldo: src = ruta del archivo (ej: 'img/sra.svg'). Vacío = placeholder */
+const PARTNERS = [{ n: 'SRA', src: '' }, { n: 'SENASA', src: '' }, { n: 'Asociación de raza', src: '' }, { n: 'Sociedad Rural', src: '' }];
+
+const ABOUT = {
+  titulo: 'Una familia de criadores, un campo y mucho oficio',
+  texto: 'Criamos hacienda a campo natural, con selección cuidadosa y sin vueltas: vas a hablar directo con quien cría los animales. Nos importa que cada toro, vientre y ternero llegue sano, manso y con todo en regla.',
+  valores: [['grass', 'Cría a campo natural, sin apuros'], ['handshake', 'Trato directo con el productor'], ['verified_user', 'Animales con registro y sanidad al día']]
+};
+
+const GALERIA = [
+  { l: 'Rodeo en pastura', size: '1600 × 1200 px · 4:3', cls: 'col-span-2 row-span-2', src: '' },
+  { l: 'Toro del plantel', size: '800 × 800 px · 1:1', cls: '', src: '' },
+  { l: 'Terneros', size: '800 × 800 px · 1:1', cls: '', src: '' },
+  { l: 'El campo al atardecer', size: '1600 × 800 px · 2:1', cls: 'col-span-2', src: '' }
+];
+
+/* Animales. c: toros | vientres | vaquillonas | terneros. estado: Disponible | Reservado | Plantel.
+   f = filas de la ficha (las primeras 4 se ven en la tarjeta). fotos = fotos extra (vacío = placeholder). */
+const ANIMALES = [
+  { c: 'toros', tag: 'Toro', n: 'Don Aurelio', raza: 'Angus Negro', rp: 'RP 214', img: IMG.hero, fotos: ['', ''], estado: 'Disponible', precio: 'Consultar',
+    f: [['Edad', '3 años'], ['Peso', '780 kg'], ['Pelaje', 'Negro'], ['Carácter', 'Manso'], ['Nacimiento', 'Marzo 2023'], ['Padre', 'Don Aurelio II'], ['Madre', 'La Reina'], ['Sanidad', 'Vacunación y brucelosis al día'], ['Registro', 'Pedigrí SRA']],
+    tags: ['Pedigrí', 'Sanidad al día', 'Probado en servicio'], obs: 'Toro de gran estructura, muy dócil y probado en servicio. Se entrega con certificado sanitario y papeles de registro.' },
+  { c: 'toros', tag: 'Toro', n: 'El Capataz', raza: 'Angus Colorado', rp: 'RP 187', img: IMG.toros, fotos: ['', ''], estado: 'Reservado', precio: 'Reservado',
+    f: [['Edad', '2,5 años'], ['Peso', '710 kg'], ['Pelaje', 'Colorado'], ['Carácter', 'Manso'], ['Nacimiento', 'Mayo 2024'], ['Padre', 'Cacique'], ['Madre', 'Colorada'], ['Sanidad', 'Vacunación al día'], ['Registro', 'Pedigrí SRA']],
+    tags: ['Pedigrí', 'Sanidad al día'], obs: 'Toro joven de excelente desarrollo. Actualmente reservado; consultá por próximos nacimientos de la misma línea.' },
+  { c: 'vientres', tag: 'Vientre', n: 'La Reina', raza: 'Angus Negro', rp: 'RP 120', img: IMG.vientres, fotos: ['', ''], estado: 'Disponible', precio: 'Consultar',
+    f: [['Edad', '5 años'], ['Peso', '520 kg'], ['Estado', 'Preñada'], ['Partos', '3'], ['Nacimiento', 'Abril 2021'], ['Padre', 'Don Aurelio I'], ['Madre', 'Morocha'], ['Sanidad', 'Vacunación al día'], ['Registro', 'Pedigrí SRA']],
+    tags: ['Preñada', 'Madre probada', 'Pedigrí'], obs: 'Vaca de muy buena aptitud materna, con tres partos sin asistencia. Se vende preñada.' },
+  { c: 'vientres', tag: 'Vientre', n: 'Pampa', raza: 'Brangus', rp: 'RP 133', img: IMG.vientres, fotos: ['', ''], estado: 'Plantel', precio: 'No se vende',
+    f: [['Edad', '6 años'], ['Peso', '540 kg'], ['Estado', 'Con cría'], ['Partos', '4'], ['Nacimiento', 'Febrero 2020'], ['Padre', 'Cacique del Norte'], ['Madre', 'Brasa'], ['Sanidad', 'Vacunación al día'], ['Registro', 'Pedigrí']],
+    tags: ['Plantel', 'Madre probada'], obs: 'Pilar del plantel de cría. No está a la venta, pero sus terneros pueden consultarse.' },
+  { c: 'vaquillonas', tag: 'Vaquillonas', n: 'Lote de 10', raza: 'Angus Negro', rp: 'Lote L-03', img: IMG.vaquillonas, fotos: ['', ''], estado: 'Disponible', precio: 'Consultar',
+    f: [['Edad', '20 meses'], ['Peso', '360 kg'], ['Estado', 'Para servicio'], ['Cantidad', '10'], ['Origen', 'Propio'], ['Sanidad', 'Vacunación al día'], ['Uniformidad', 'Lote parejo']],
+    tags: ['Lote parejo', 'Sanidad al día', 'Origen propio'], obs: 'Lote parejo, criado a campo y listo para entrar en servicio. Se pueden ver en el campo.' },
+  { c: 'vaquillonas', tag: 'Vaquillonas', n: 'Lote de 6', raza: 'Brangus', rp: 'Lote L-04', img: IMG.vaquillonas, fotos: ['', ''], estado: 'Reservado', precio: 'Reservado',
+    f: [['Edad', '22 meses'], ['Peso', '385 kg'], ['Estado', 'Preñadas'], ['Cantidad', '6'], ['Origen', 'Propio'], ['Sanidad', 'Vacunación al día'], ['Parición', 'Estimada en primavera']],
+    tags: ['Preñadas', 'Sanidad al día'], obs: 'Vaquillonas preñadas, actualmente reservadas. Consultá por próximos lotes.' },
+  { c: 'terneros', tag: 'Terneros', n: 'Lote de 25', raza: 'Angus Negro', rp: 'Lote L-05', img: IMG.terneros, fotos: ['', ''], estado: 'Disponible', precio: 'Consultar',
+    f: [['Edad', '7 meses'], ['Peso', '210 kg'], ['Sanidad', 'Al día'], ['Destete', 'Hecho'], ['Cantidad', '25'], ['Origen', 'Propio'], ['Uniformidad', 'Lote parejo']],
+    tags: ['Destetados', 'Sanidad al día', 'Origen propio'], obs: 'Terneros destetados, vacunados y bien criados, en lote parejo.' },
+  { c: 'terneros', tag: 'Terneros', n: 'Lote de 18', raza: 'Brangus', rp: 'Lote L-06', img: IMG.terneros, fotos: ['', ''], estado: 'Disponible', precio: 'Consultar',
+    f: [['Edad', '8 meses'], ['Peso', '225 kg'], ['Sanidad', 'Al día'], ['Destete', 'Hecho'], ['Cantidad', '18'], ['Origen', 'Propio'], ['Uniformidad', 'Lote parejo']],
+    tags: ['Destetados', 'Sanidad al día'], obs: 'Terneros Brangus rústicos y de buen desarrollo.' }
+];
+const CAT_FILTROS = [['todos', 'Todas'], ['toros', 'Toros'], ['vientres', 'Vientres'], ['vaquillonas', 'Vaquillonas'], ['terneros', 'Terneros']];
+const ESTADO_FILTROS = [['todos', 'Todos'], ['Disponible', 'Disponibles'], ['Reservado', 'Reservados'], ['Plantel', 'Plantel']];
+
+const LOTES = [
+  ['L-01', 'toros', 'Toros para servicio', 'Angus Negro', 4, '760 kg', 'Disponible'],
+  ['L-02', 'vientres', 'Vientres servidos', 'Angus Negro', 12, '490 kg', 'Disponible'],
+  ['L-03', 'vaquillonas', 'Vaquillonas para servicio', 'Angus Negro', 10, '360 kg', 'Disponible'],
+  ['L-04', 'vaquillonas', 'Vaquillonas preñadas', 'Brangus', 6, '385 kg', 'Reservado'],
+  ['L-05', 'terneros', 'Terneros destetados', 'Angus Negro', 25, '210 kg', 'Disponible'],
+  ['L-06', 'terneros', 'Terneros destetados', 'Brangus', 18, '225 kg', 'Disponible']
+];
+
+const PASOS = [
+  ['Contactanos', 'Escribinos por WhatsApp o llamanos y contanos qué buscás.'],
+  ['Visitá el campo', 'Coordinamos una visita para que veas los animales en persona.'],
+  ['Reservá', 'Reservás el lote con una seña y lo dejamos apartado.'],
+  ['Retiro o entrega', 'Lo retirás del campo o coordinamos el flete hasta tu establecimiento.']
+];
+
+const CONDICIONES = [
+  { i: 'description', t: 'Documentación al día', d: 'Entregamos la guía, el certificado sanitario y los papeles de registro al momento de la venta.' },
+  { i: 'payments', t: 'Reserva y pago', d: 'Reserva con seña y saldo a la entrega. Consultá por otras formas de pago.' },
+  { i: 'local_shipping', t: 'Retiro y flete', d: 'Podés retirar en el campo o coordinamos el transporte habilitado hasta tu establecimiento.' }
+];
+
+const FAQ = [
+  ['¿Puedo ir a ver los animales antes de comprar?', 'Claro. Coordiná la visita por WhatsApp y te recibimos en el campo con los animales listos.'],
+  ['¿Los animales tienen registro y sanidad?', 'Sí. Entregamos la documentación sanitaria y, según el animal, los papeles de registro y pedigrí.'],
+  ['¿Hacen envíos?', 'Coordinamos el flete con transporte habilitado. El costo depende del destino y la cantidad de animales.'],
+  ['¿Cómo se reserva un lote?', 'Con una seña. Queda apartado a tu nombre hasta el día de entrega.']
+];
+
+const CONTACTO_DIF = [
+  { i: 'handshake', t: 'Trato directo', d: 'Hablás con quien cría los animales, sin intermediarios.' },
+  { i: 'event_available', t: 'Visitas con turno', d: 'Coordinamos el día y la hora para que recorras el campo con calma.' },
+  { i: 'local_shipping', t: 'Flete coordinado', d: 'Te ayudamos a organizar el transporte hasta tu establecimiento.' }
+];
+
+const CTAS = {
+  venta: { k: 'Atención directa', t: '¿Buscás un reproductor o hacienda de cría?', d: 'Escribinos y te pasamos la lista actualizada con fotos, videos y precios.' },
+  visita: { k: 'Conocé el campo', t: '¿Querés ver los animales en persona?', d: 'Coordinemos una visita y recorrés el campo con nosotros.' }
+};
+
+/* ============================================================
+   HELPERS
+   ============================================================ */
+const $ = (s, r = document) => r.querySelector(s);
+const $$ = (s, r = document) => [...r.querySelectorAll(s)];
+const WA_URL = (txt) => `https://wa.me/${BRAND.wa}` + (txt ? `?text=${encodeURIComponent(txt)}` : '');
+const ICONBOX = i => `<div class="ibox"><span class="material-symbols-outlined text-[20px] font-light">${i}</span></div>`;
+const ST_CLASS = { Disponible: 'st-ok', Reservado: 'st-res', Plantel: 'st-plan' };
+const ST = (e, extra = '') => `<span class="st ${ST_CLASS[e]} ${extra}">${e}</span>`;
+const PH = (label = 'Imagen', size = '', dark = false) => `<div class="ph ${dark ? 'ph-dark' : ''}"><span class="material-symbols-outlined">image</span><b>${label}</b>${size ? `<small>${size}</small>` : ''}</div>`;
+const MEDIA = (src, label, size, dark = false) => PH(label, size, dark) + (src ? `<div class="ph-img" style="background-image:url('${src}')"></div>` : '');
+const LOGOSLOT = p => `<div class="relative h-16 rounded-md flex items-center justify-center overflow-hidden transition-colors hover:bg-white/60" style="background:var(--card);border:1px dashed rgba(47,90,66,.4)">
+  <span class="font-sans font-bold tracking-[0.18em] uppercase text-[12px] muted text-center px-2">${p.n}</span>
+  <span class="absolute bottom-1 right-2 text-[8px] tracking-[0.2em] uppercase" style="color:#9aa69d">Logo</span>
+  ${p.src ? `<img src="${p.src}" alt="${p.n}" onerror="this.remove()" class="absolute inset-0 w-full h-full object-contain p-4" style="background:var(--card)"/>` : ''}
+</div>`;
+
+function initLogos() {
+  $$('.logo').forEach(img => {
+    const fb = img.nextElementSibling;
+    fb.textContent = BRAND.siglas;
+    const showFb = () => { img.style.display = 'none'; fb.classList.remove('hidden'); fb.classList.add('flex'); };
+    if (!IMG.logo) return showFb();
+    img.onerror = showFb;
+    img.src = IMG.logo;
+  });
+}
+
+function chips(el, items, state, onChange) {
+  el.innerHTML = items.map(([v, l]) => `<button data-v="${v}" class="chip ${state.value === v ? 'chip-on' : ''}">${l}</button>`).join('');
+  $$('button', el).forEach(b => b.onclick = () => { state.value = b.dataset.v; chips(el, items, state, onChange); onChange(); });
+}
+
+/* ============================================================
+   RENDER
+   ============================================================ */
+function renderStatic() {
+  initLogos();
+  $$('.brand-name').forEach(e => e.textContent = BRAND.nombre);
+  $$('.brand-sub').forEach(e => e.textContent = BRAND.sub);
+  $('#nav-wa').href = WA_URL();
+
+  $('#nav-links').innerHTML = Object.entries(PAGES).map(([k, p]) => `<a data-nav="${k}" href="#/${k}" class="nav-link">${p.nav}</a>`).join('');
+
+  // Inicio
+  $('#home-logos').innerHTML = PARTNERS.map(LOGOSLOT).join('');
+  $('#home-bento').innerHTML = HOME_CARDS.map(c => `
+    <a href="#/${c.to}" class="group relative overflow-hidden rounded-xl min-h-[300px] lg:min-h-0 transition-all duration-300 hover:-translate-y-0.5 hover:shadow-[0_24px_50px_-22px_rgba(16,35,26,0.8)] ${c.span}" style="border:1px solid rgba(31,58,43,.25)">
+      <div class="absolute inset-0 transition-transform duration-700 group-hover:scale-[1.04]">${MEDIA(c.img, c.label, c.size, true)}</div>
+      <div class="absolute inset-0 bg-gradient-to-t from-[#10231a]/92 via-[#10231a]/35 to-transparent"></div>
+      <span class="tag absolute top-4 left-4">${c.tag}</span>
+      <div class="absolute inset-x-0 bottom-0 p-6 space-y-2">
+        <h3 class="font-sans ${c.big ? 'text-2xl sm:text-3xl' : 'text-xl'} font-bold" style="color:#f4f0e6">${c.t}</h3>
+        <p class="text-[13px] max-w-md leading-relaxed" style="color:#d6d9cb">${c.d}</p>
+        <span class="inline-flex items-center gap-1.5 text-[12px] font-semibold pt-1" style="color:#ecd9a8">${c.cta}<span class="material-symbols-outlined text-[16px] group-hover:translate-x-1 transition-transform" style="color:#d9bf85">arrow_forward</span></span>
+      </div>
+    </a>`).join('');
+
+  $('#about-main').innerHTML = MEDIA(IMG.aboutMain, 'Foto del campo o la familia', '1200 × 1500 px · 4:5');
+  $('#about-second').innerHTML = MEDIA(IMG.aboutSecond, 'Detalle', '600 × 600 px · 1:1');
+  $('#about-title').textContent = ABOUT.titulo;
+  $('#about-text').textContent = ABOUT.texto;
+  $('#about-values').innerHTML = ABOUT.valores.map(([i, t]) => `<li class="flex items-center gap-3"><span class="ibox !w-9 !h-9"><span class="material-symbols-outlined text-[18px] font-light">${i}</span></span>${t}</li>`).join('');
+
+  $('#home-gallery').innerHTML = GALERIA.map(g => `
+    <figure class="group relative overflow-hidden rounded-lg ${g.cls}" style="border:1px solid var(--line)">
+      <div class="absolute inset-0 transition-transform duration-700 group-hover:scale-[1.04]">${MEDIA(g.src, g.l, g.size)}</div>
+      ${g.src ? `<div class="absolute inset-0 bg-gradient-to-t from-[#10231a]/75 via-transparent to-transparent pointer-events-none"></div><figcaption class="absolute bottom-3 left-3 text-[11px] font-semibold tracking-wide" style="color:#f4f0e6">${g.l}</figcaption>` : ''}
+    </figure>`).join('');
+
+  // Animales: resumen
+  const n = e => ANIMALES.filter(a => a.estado === e).length;
+  const stats = [
+    ['Fichas publicadas', ANIMALES.length, '#1d2a22', 'inventory_2'],
+    ['Disponibles', n('Disponible'), '#2b5a3f', 'check_circle'],
+    ['Reservados', n('Reservado'), '#8a6f36', 'bookmark'],
+    ['Plantel (no se vende)', n('Plantel'), '#6a4a38', 'favorite']
+  ];
+  $('#animales-stats').innerHTML = stats.map(([l, v, c, i]) => `
+    <div class="panel panel-static p-5 flex items-center gap-4">${ICONBOX(i)}<div><p class="font-sans text-3xl font-bold leading-none" style="color:${c}">${v}</p><p class="muted text-[11.5px] mt-1.5 leading-snug">${l}</p></div></div>`).join('');
+
+  // En venta
+  $('#pasos').innerHTML = PASOS.map(([t, d], i) => `
+    <li class="panel p-6 space-y-3">
+      <span class="font-sans text-4xl font-bold" style="color:#a98a4d">0${i + 1}</span>
+      <h3 class="ink font-sans text-base font-bold">${t}</h3><p class="muted text-[13px] leading-relaxed">${d}</p>
+    </li>`).join('');
+  $('#condiciones').innerHTML = CONDICIONES.map(c => `<div class="panel p-7 space-y-3.5">${ICONBOX(c.i)}<h3 class="ink font-sans text-xl font-bold">${c.t}</h3><p class="muted text-[13.5px] leading-relaxed">${c.d}</p></div>`).join('');
+  $('#faq').innerHTML = FAQ.map(([q, a]) => `
+    <details class="panel panel-static">
+      <summary class="ink flex items-center justify-between gap-4 cursor-pointer px-6 py-5 text-[14.5px] font-semibold">${q}<span class="chevron material-symbols-outlined brass transition-transform">expand_more</span></summary>
+      <p class="muted px-6 pb-5 text-[13.5px] leading-relaxed">${a}</p>
+    </details>`).join('');
+
+  // Contacto
+  $('#horario-top').textContent = BRAND.horario + '. Respondemos personalmente cada consulta.';
+  const canales = [
+    { i: 'chat', t: 'WhatsApp', d: BRAND.tel, cta: 'Escribir ahora', href: WA_URL(), ext: true },
+    { i: 'call', t: 'Teléfono', d: BRAND.tel, cta: 'Llamar', href: BRAND.telHref },
+    { i: 'mail', t: 'Email', d: BRAND.email, cta: 'Enviar correo', href: 'mailto:' + BRAND.email },
+    { i: 'location_on', t: 'El campo', d: BRAND.dir.join('<br/>'), note: 'Visitas con turno previo' }
+  ];
+  $('#canales').innerHTML = canales.map(c => {
+    const inner = `${ICONBOX(c.i)}<h3 class="ink font-sans text-lg font-bold">${c.t}</h3><p class="muted text-[13px] leading-relaxed break-words">${c.d}</p>` +
+      (c.cta ? `<span class="text-[12px] font-semibold inline-flex items-center gap-1" style="color:#2f5a42">${c.cta} <span class="material-symbols-outlined text-[16px] brass group-hover:translate-x-1 transition-transform">arrow_forward</span></span>` : `<span class="text-[12px] font-semibold" style="color:#2f5a42">${c.note}</span>`);
+    return c.href
+      ? `<a href="${c.href}" ${c.ext ? 'target="_blank" rel="noopener"' : ''} class="group panel p-6 space-y-3.5 block">${inner}</a>`
+      : `<div class="panel panel-static p-6 space-y-3.5">${inner}</div>`;
+  }).join('');
+  $('#mapa').innerHTML = MEDIA(IMG.mapa, 'Mapa o foto del acceso', '1200 × 750 px · 16:10');
+  $('#dir-texto').innerHTML = BRAND.dir.join('<br/>');
+  $('#horario-card').textContent = BRAND.horario;
+  $('#contacto-dif').innerHTML = CONTACTO_DIF.map(c => `<div class="panel p-7 space-y-3.5">${ICONBOX(c.i)}<h3 class="ink font-sans text-xl font-bold">${c.t}</h3><p class="muted text-[13.5px] leading-relaxed">${c.d}</p></div>`).join('');
+
+  // Footer
+  $('#footer-blurb').textContent = 'Cría de hacienda a campo, con registro al día y trato directo del productor.';
+  $('#footer-nav').innerHTML = Object.entries(PAGES).map(([k, p]) => `<li><a class="hover:text-white transition-colors" href="#/${k}">${p.nav}</a></li>`).join('');
+  $('#footer-dir').innerHTML = BRAND.dir.join('<br/>');
+  $('#footer-contacto').innerHTML = `${BRAND.tel}<br/>${BRAND.email}<br/>${BRAND.horario}`;
+  $('#footer-copy').textContent = `© ${new Date().getFullYear()} ${BRAND.nombre}. Todos los derechos reservados.`;
+
+  // Banners CTA
+  $$('[data-cta]').forEach(el => {
+    const c = CTAS[el.dataset.cta];
+    el.innerHTML = `
+    <section class="max-w-7xl mx-auto px-6 sm:px-8 py-20 w-full">
+      <div class="cta-banner on-dark p-8 sm:p-12 lg:p-14 flex flex-col lg:flex-row items-start lg:items-center justify-between gap-8">
+        <div class="space-y-3 max-w-2xl">
+          <span class="eyebrow">${c.k}</span>
+          <h3 class="ink font-sans text-2xl sm:text-3xl lg:text-4xl font-bold leading-tight">${c.t}</h3>
+          <p class="text-sm sm:text-[15px] leading-relaxed" style="color:#d9ddd0">${c.d}</p>
+        </div>
+        <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 w-full lg:w-auto shrink-0">
+          <a class="btn btn-outline-light" href="#/animales">Ver mis animales</a>
+          <a class="btn btn-bone" href="${WA_URL()}" target="_blank" rel="noopener"><span class="material-symbols-outlined text-[17px] font-light">chat</span>Escribinos por WhatsApp</a>
+        </div>
+      </div>
+    </section>`;
+  });
+}
+
+/* ---------- Animales: filtros, tarjetas y ficha ---------- */
+const catState = { value: 'todos' }, estadoState = { value: 'todos' };
+const filtrados = () => ANIMALES.map((a, i) => ({ a, i })).filter(({ a }) =>
+  (catState.value === 'todos' || a.c === catState.value) && (estadoState.value === 'todos' || a.estado === estadoState.value));
+
+function renderAnimales() {
+  const lista = filtrados();
+  $('#animales-vacio').classList.toggle('hidden', lista.length > 0);
+  $('#animales-grid').innerHTML = lista.map(({ a, i }) => `
+    <article class="group panel p-5 flex flex-col justify-between">
+      <div class="space-y-4">
+        <div class="relative w-full h-56 overflow-hidden rounded-lg">
+          <div class="relative w-full h-full group-hover:scale-[1.04] transition-transform duration-500">${MEDIA(a.img, 'Foto del animal', '1200 × 900 px · 4:3')}</div>
+          <div class="absolute inset-0 bg-gradient-to-t from-[#10231a]/45 via-transparent to-transparent pointer-events-none"></div>
+          <span class="tag absolute top-3 left-3">${a.tag}</span>${ST(a.estado, 'absolute top-3 right-3')}
+        </div>
+        <div>
+          <h3 class="ink font-sans text-xl font-bold">${a.n}</h3>
+          <p class="brass text-[12px] font-semibold tracking-wide mt-0.5">${a.raza} · ${a.rp}</p>
+        </div>
+        <dl class="grid grid-cols-2 gap-2.5 text-[12.5px]">${a.f.slice(0, 4).map(([k, v]) => `<div class="rounded-md p-3" style="background:#f1ede1;border:1px solid #e2dbc9"><dt class="muted text-[10.5px] uppercase tracking-wider">${k}</dt><dd class="ink font-bold mt-0.5">${v}</dd></div>`).join('')}</dl>
+        <div class="flex flex-wrap gap-1.5">${a.tags.map(t => `<span class="text-[10.5px] font-semibold px-2.5 py-1 rounded-full" style="color:#2f5a42;background:#e6ecde;border:1px solid #c9d6c0">${t}</span>`).join('')}</div>
+      </div>
+      <div class="pt-5 mt-5 flex items-center justify-between gap-3" style="border-top:1px solid var(--line)">
+        <div><p class="muted text-[10.5px] uppercase tracking-wider">Precio</p><p class="ink text-[13px] font-bold">${a.precio}</p></div>
+        <button data-ficha="${i}" class="btn btn-green btn-sm">Ver ficha<span class="material-symbols-outlined text-[16px]">arrow_forward</span></button>
+      </div>
+    </article>`).join('');
+  renderLotes();
+}
+
+function renderLotes() {
+  const lista = LOTES.filter(l => catState.value === 'todos' || l[1] === catState.value)
+                     .filter(l => estadoState.value === 'todos' || l[6] === estadoState.value);
+  $('#lotes-body').innerHTML = lista.length ? lista.map((l, i) => `
+    <tr class="transition-colors hover:bg-[#2f5a42]/[0.06]" style="${i < lista.length - 1 ? 'border-bottom:1px solid var(--line)' : ''}">
+      <td class="px-5 py-4 font-bold" style="color:#2f5a42">${l[0]}</td>
+      <td class="ink px-5 py-4">${l[2]}</td><td class="muted px-5 py-4">${l[3]}</td>
+      <td class="muted px-5 py-4">${l[4]}</td><td class="muted px-5 py-4">${l[5]}</td>
+      <td class="px-5 py-4">${ST(l[6])}</td>
+      <td class="px-5 py-4 text-right"><a class="text-[12px] font-bold whitespace-nowrap hover:underline" style="color:#2f5a42" target="_blank" rel="noopener" href="${WA_URL('Hola, me interesa el lote ' + l[0] + ' (' + l[2] + ', ' + l[3] + ').')}">Consultar →</a></td>
+    </tr>`).join('') : `<tr><td colspan="7" class="muted px-5 py-10 text-center">No hay lotes con ese filtro.</td></tr>`;
+}
+
+let fichaIdx = null, fotoIdx = 0;
+function renderFicha() {
+  const a = ANIMALES[fichaIdx];
+  const slides = [[a.img, 'Foto principal'], [(a.fotos || [])[0] || '', 'Foto 2'], [(a.fotos || [])[1] || '', 'Foto 3']];
+  const consulta = WA_URL(`Hola, me interesa ${a.tag.toLowerCase()} "${a.n}" (${a.raza}, ${a.rp}). ¿Sigue disponible?`);
+  const fotos = WA_URL(`Hola, ¿me pasás fotos y video de "${a.n}" (${a.raza}, ${a.rp})?`);
+  $('#modal-body').innerHTML = `
+    <button id="modal-x" aria-label="Cerrar" class="absolute top-3 right-3 z-10 w-9 h-9 rounded-full flex items-center justify-center transition-colors hover:bg-white" style="background:rgba(244,240,230,.9);border:1px solid rgba(31,58,43,.25);color:#1f3a2b"><span class="material-symbols-outlined text-[20px]">close</span></button>
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-7">
+      <div class="space-y-3">
+        <div class="relative aspect-[4/3] rounded-lg overflow-hidden" style="border:1px solid var(--line)">${MEDIA(slides[fotoIdx][0], slides[fotoIdx][1], '1200 × 900 px · 4:3')}</div>
+        <div class="grid grid-cols-3 gap-3">${slides.map(([src, l], k) => `
+          <button data-foto="${k}" class="relative aspect-[4/3] rounded-md overflow-hidden transition-all ${k === fotoIdx ? 'opacity-100' : 'opacity-60 hover:opacity-100'}" style="border:2px solid ${k === fotoIdx ? '#2f5a42' : 'var(--line)'}">${MEDIA(src, l, '')}</button>`).join('')}</div>
+      </div>
+      <div class="space-y-5 pr-0 lg:pr-6">
+        <div>
+          <div class="flex flex-wrap items-center gap-2 mb-3"><span class="tag" style="border-color:rgba(31,58,43,.25)">${a.tag}</span>${ST(a.estado)}</div>
+          <h3 class="ink font-sans text-3xl font-bold leading-tight">${a.n}</h3>
+          <p class="brass text-[13px] font-semibold tracking-wide mt-1">${a.raza} · ${a.rp}</p>
+        </div>
+        <div class="rounded-lg px-5 py-4 flex items-center justify-between" style="background:#e3ebdc;border:1px solid #c3d1bd">
+          <span class="text-[11px] uppercase tracking-[0.16em] font-bold" style="color:#2f5a42">Precio</span>
+          <span class="text-[16px] font-bold" style="color:#1f3a2b">${a.precio}</span>
+        </div>
+        <dl class="text-[13px]">${a.f.map(([k, v], r) => `<div class="flex items-center justify-between gap-4 py-2.5" style="${r ? 'border-top:1px solid var(--line)' : ''}"><dt class="muted">${k}</dt><dd class="ink font-semibold text-right">${v}</dd></div>`).join('')}</dl>
+        <p class="muted text-[13.5px] leading-relaxed">${a.obs}</p>
+        <div class="flex flex-wrap gap-3 pt-1">
+          <a class="btn btn-green" href="${consulta}" target="_blank" rel="noopener"><span class="material-symbols-outlined text-[17px] font-light">chat</span>Consultar por WhatsApp</a>
+          <a class="btn btn-outline" href="${fotos}" target="_blank" rel="noopener"><span class="material-symbols-outlined text-[17px] font-light brass">videocam</span>Pedir fotos y video</a>
+        </div>
+      </div>
+    </div>`;
+}
+function openFicha(i) {
+  fichaIdx = i; fotoIdx = 0; renderFicha();
+  const m = $('#modal'); m.classList.remove('hidden'); m.classList.add('flex');
+  document.body.style.overflow = 'hidden';
+}
+function closeFicha() {
+  const m = $('#modal'); m.classList.add('hidden'); m.classList.remove('flex');
+  document.body.style.overflow = '';
+}
+
+function initContacto() {
+  $('#form-consulta').addEventListener('submit', e => {
+    e.preventDefault();
+    const nombre = $('#nombre').value.trim(), campo = $('#campo').value.trim(), msg = $('#mensaje').value.trim();
+    const texto = `Hola, soy ${nombre}${campo ? ' (' + campo + ')' : ''}. Me interesa: ${$('#interes').value}.${msg ? ' ' + msg : ''}`;
+    window.open(WA_URL(texto), '_blank', 'noopener');
+  });
+}
+
+/* ============================================================
+   ROUTER (hash: #/ruta)
+   ============================================================ */
+function route() {
+  closeFicha();
+  let key = location.hash.replace(/^#\/?/, '') || 'inicio';
+  if (key === 'en-venta') key = 'animales';          // compatibilidad con links viejos
+  if (!PAGES[key]) key = 'inicio';
+  const p = PAGES[key];
+
+  $$('.page').forEach(el => el.hidden = el.dataset.page !== key);
+
+  $('#hero-bg').style.backgroundImage = p.bg ? `url('${p.bg}')` : 'none';
+  $('#hero-badge').textContent = p.badge;
+  $('#hero-title').innerHTML = p.h1;
+  $('#hero-sub').textContent = p.sub;
+  $('#hero-title').className = 'ink font-sans text-4xl sm:text-5xl leading-[1.08] font-bold tracking-tight ' + (p.home ? 'lg:text-[58px]' : 'lg:text-[52px]');
+  $('#hero-ctas').classList.toggle('hidden', !p.home);
+  $('#hero').classList.toggle('min-h-[680px]', !!p.home);
+  $('#hero').classList.toggle('lg:min-h-[780px]', !!p.home);
+  $('#hero').classList.toggle('min-h-[480px]', !p.home);
+
+  $$('[data-nav]').forEach(a => {
+    const on = a.dataset.nav === key;
+    a.classList.toggle('nav-active', on);
+    on ? a.setAttribute('aria-current', 'page') : a.removeAttribute('aria-current');
+  });
+
+  document.title = key === 'inicio' ? BRAND.nombre : `${p.title} | ${BRAND.nombre}`;
+  window.scrollTo({ top: 0, behavior: 'instant' });
+}
+
+/* Barra fija: transparente sobre el hero, hueso al hacer scroll */
+const topbar = $('#topbar');
+const onScroll = () => topbar.classList.toggle('is-solid', window.scrollY > 60);
+
+/* Init */
+renderStatic();
+chips($('#f-cat'), CAT_FILTROS, catState, renderAnimales);
+chips($('#f-estado'), ESTADO_FILTROS, estadoState, renderAnimales);
+renderAnimales();
+initContacto();
+
+$('#animales-grid').addEventListener('click', e => { const b = e.target.closest('[data-ficha]'); if (b) openFicha(+b.dataset.ficha); });
+$('#modal').addEventListener('click', e => {
+  if (e.target.id === 'modal-bg' || e.target.closest('#modal-x')) return closeFicha();
+  const t = e.target.closest('[data-foto]'); if (t) { fotoIdx = +t.dataset.foto; renderFicha(); }
+});
+document.addEventListener('keydown', e => { if (e.key === 'Escape') closeFicha(); });
+
+window.addEventListener('scroll', onScroll, { passive: true });
+onScroll();
+window.addEventListener('hashchange', route);
+route();
+
+
+const SUPABASE_URL = 'https://wavxivsalphthkmekzla.supabase.co';
+const SUPABASE_KEY = 'sb_publishable_Ugsbe8guq0pJFWiGiarZZQ__6JVV-Ix';
+const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+async function cargarDatosDesdeSupabase() {
+  // 1. Cargar Configuración del Sitio (site_settings)
+  const { data: settings } = await supabaseClient.from('site_settings').select('*');
+  if (settings && settings.length > 0) {
+    const config = {};
+    settings.forEach(item => config[item.key] = item.value);
+
+    // Actualizar datos globales si existen en tu JS
+    if (window.CABANA) {
+      window.CABANA.nombre = config.nombre || window.CABANA.nombre;
+      window.CABANA.sub = config.sub || window.CABANA.sub;
+      window.CABANA.wa = config.wa || window.CABANA.wa;
+      window.CABANA.tel = config.tel || window.CABANA.tel;
+      window.CABANA.email = config.email || window.CABANA.email;
+    }
+  }
+
+  // 2. Cargar Animales (animals)
+  const { data: animals } = await supabaseClient.from('animals').select('*');
+  if (animals && animals.length > 0) {
+    ANIMALES.length = 0;
+    animals.forEach(a => {
+      ANIMALES.push({
+        c: a.category,
+        tag: a.tag,
+        n: a.name,
+        raza: a.breed,
+        rp: a.rp,
+        img: a.main_image_url || (typeof IMG !== 'undefined' ? IMG.hero : ''),
+        fotos: a.gallery_urls || ['', ''],
+        estado: a.status,
+        precio: a.price,
+        f: Object.entries(a.attributes || {}),
+        tags: a.tags || [],
+        obs: a.observations || ''
+      });
+    });
+  }
+
+  // 3. Cargar Lotes (lots)
+  const { data: lotsData } = await supabaseClient.from('lots').select('*');
+  if (lotsData && lotsData.length > 0 && window.LOTES) {
+    LOTES.length = 0;
+    lotsData.forEach(l => {
+      LOTES.push({
+        id: l.lot_code,
+        cat: l.category,
+        desc: l.description,
+        raza: l.breed,
+        cant: l.quantity,
+        peso: l.average_weight,
+        estado: l.status
+      });
+    });
+  }
+
+  // Re-renderizar las vistas
+  if (typeof renderAnimales === 'function') renderAnimales();
+  if (typeof renderLotes === 'function') renderLotes();
+  if (typeof renderConfig === 'function') renderConfig();
+}
+cargarDatosDesdeSupabase();
+</script>
+
+</body></html>
