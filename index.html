@@ -938,7 +938,8 @@ async function cargarDatosDesdeSupabase() {
   const secGal = document.querySelector('#home-gallery').closest('section');
   if (cfg.gallery_title) secGal.querySelector('h2').innerHTML = cfg.gallery_title;
 
-  const { data: gal } = await supabaseClient.from('gallery').select('*').order('sort_order');
+  const { data: gal, error: galErr } = await supabaseClient.from('gallery').select('*').order('sort_order');
+  console.log('settings:', cfg, 'gallery:', gal, 'error:', galErr);
   if (gal && gal.length) gal.forEach((g, i) => {
     if (GALERIA[i]) { GALERIA[i].src = g.image_url || ''; if (g.label) GALERIA[i].l = g.label; }
   });
