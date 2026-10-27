@@ -912,9 +912,8 @@ async function cargarDatosDesdeSupabase() {
     });
   }
 
-  // Re-renderizar interfaces en pantalla
-  if (typeof renderAnimales === 'function') renderAnimales();
-  if (typeof renderLotes === 'function') renderLotes();
+    renderStatic();
+  renderAnimales();
 }
 
 cargarDatosDesdeSupabase();
