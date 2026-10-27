@@ -8,7 +8,7 @@
 <meta charset="utf-8"/>
 <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
 <meta name="theme-color" content="#1f3a2b"/>
-<title>Cabaña El Ombú</title>
+<title data-setting="site_title">Cabaña El Ombú</title>
 <link href="https://fonts.googleapis.com" rel="preconnect"/>
 <link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;1,400&amp;family=Inter:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet"/>
@@ -865,8 +865,9 @@ async function cargarDatosDesdeSupabase() {
       });
     });
 
-    // Actualiza el link de WhatsApp si existe
+    // Actualiza el link de WhatsApp si existe en la configuración
     if (config.wa) {
+      BRAND.wa = config.wa;
       const btnWa = document.getElementById('nav-wa');
       if (btnWa) btnWa.href = `https://wa.me/${config.wa}`;
     }
@@ -899,24 +900,23 @@ async function cargarDatosDesdeSupabase() {
   if (lotsData && lotsData.length > 0 && typeof LOTES !== 'undefined') {
     LOTES.length = 0;
     lotsData.forEach(l => {
-      LOTES.push({
-        id: l.lot_code,
-        cat: l.category,
-        desc: l.description,
-        raza: l.breed,
-        cant: l.quantity,
-        peso: l.average_weight,
-        estado: l.status
-      });
+      LOTES.push([
+        l.lot_code,
+        l.category,
+        l.description,
+        l.breed,
+        l.quantity,
+        l.average_weight,
+        l.status
+      ]);
     });
   }
 
-  // Re-renderizar interfaces
+  // Re-renderizar interfaces en pantalla
   if (typeof renderAnimales === 'function') renderAnimales();
   if (typeof renderLotes === 'function') renderLotes();
 }
 
-  
 cargarDatosDesdeSupabase();
 </script>
 
