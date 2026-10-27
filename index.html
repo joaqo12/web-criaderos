@@ -936,7 +936,7 @@ async function cargarDatosDesdeSupabase() {
   const secCria = document.querySelector('#home-bento').closest('section');
   if (cfg.cria_title) secCria.querySelector('h2').innerHTML = cfg.cria_title;
   if (cfg.cria_text) secCria.querySelector('p').textContent = cfg.cria_text;
-  const secGal = document.querySelector('#home-gallery').closest('section');
+  const { data: par } = await supabaseClient.from('partners').select('*').order('sort_order');   if (par && par.length) { PARTNERS.length = 0; par.forEach(p => PARTNERS.push({ n: p.name, src: p.image_url || '' })); }
   if (cfg.gallery_title) secGal.querySelector('h2').innerHTML = cfg.gallery_title;
 
   const { data: gal, error: galErr } = await supabaseClient.from('gallery').select('*').order('sort_order');
