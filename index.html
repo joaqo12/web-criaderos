@@ -851,6 +851,10 @@ const SUPABASE_URL = 'https://wavxivsalphthkmekzla.supabase.co';
 const SUPABASE_KEY = 'sb_publishable_Ugsbe8guq0pJFWiGiarZZQ__6JVV-Ix';
 const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
+  const SITE = new URLSearchParams(location.search).get('c') || 'el-ombu';
+const _from = supabaseClient.from.bind(supabaseClient);
+supabaseClient.from = t => { const q = _from(t); const s = q.select.bind(q); q.select = (...a) => s(...a).eq('site_id', SITE); return q; };
+
 async function cargarDatosDesdeSupabase() {
   // 1. Cargar site_settings (nombre, subtítulo, títulos y WhatsApp)
   const { data: settings } = await supabaseClient.from('site_settings').select('*');
