@@ -7,7 +7,7 @@
 
 <meta charset="utf-8"/>
 <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
-<meta name="theme-color" content="#1f3a2b"/>
+<meta name="theme-color" content="var(--c-main)"/>
 <title data-setting="site_title">Cabaña El Ombú</title>
 <link href="https://fonts.googleapis.com" rel="preconnect"/>
 <link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
@@ -22,19 +22,21 @@
     --line: #dcd5c3;
     --ink: #1d2a22;     /* texto: verde casi negro */
     --muted: #5d6b61;
-    --green: #1f3a2b;   /* verde bosque */
-    --green2: #2f5a42;
+    --green: var(--c-main);   /* verde bosque */
+    --green2: var(--c-mid);
     --sage: #8fa88f;
     --sagepale: #dfe7da;
     --brass: #a98a4d;
     --brassdark: #8a6f36;
+        --c-dark: #14261c; --c-main: #1f3a2b; --c-mid: #2f5a42; --c-light: #3a7355;
+    --c-band1: #26442f; --c-band2: #1a3023; --c-cta: #34674c;
   }
   .on-dark { --ink: #f1ede2; --muted: #bccabd; --card: rgba(244,240,230,.07); --line: rgba(241,237,226,.17); }
 
   html, body { margin: 0; padding: 0; background: var(--bg); color: var(--ink); font-family: 'Montserrat', 'Inter', system-ui, -apple-system, sans-serif; }
   body { overscroll-behavior: none; }
   ::-webkit-scrollbar { display: none; }
-  ::selection { background: #2f5a42; color: #f4f0e6; }
+  ::selection { background: var(--c-mid); color: #f4f0e6; }
   select option { background: #fbf9f3; color: #1d2a22; }
   details > summary { list-style: none; }
   details > summary::-webkit-details-marker { display: none; }
@@ -58,12 +60,12 @@
   /* Botones */
   .btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; padding: 12px 24px; border-radius: 6px; font-size: 13px; font-weight: 700; letter-spacing: .03em; transition: all .25s ease; white-space: nowrap; }
   .btn:hover { transform: translateY(-1px); }
-  .btn-green { background: linear-gradient(135deg, #3a7355, #1f3a2b); color: #f4f0e6; border: 1px solid rgba(31,58,43,.7); box-shadow: 0 10px 24px -12px rgba(31,58,43,.8); }
+  .btn-green { background: linear-gradient(135deg, var(--c-light), var(--c-main)); color: #f4f0e6; border: 1px solid rgba(31,58,43,.7); box-shadow: 0 10px 24px -12px rgba(31,58,43,.8); }
   .btn-green:hover { filter: brightness(1.1); }
-  .btn-bone { background: #f4f0e6; color: #1f3a2b; box-shadow: 0 10px 24px -12px rgba(0,0,0,.5); }
+  .btn-bone { background: #f4f0e6; color: var(--c-main); box-shadow: 0 10px 24px -12px rgba(0,0,0,.5); }
   .btn-bone:hover { background: #fff; }
-  .btn-outline { border: 1px solid rgba(31,58,43,.4); color: #1f3a2b; background: transparent; font-weight: 600; }
-  .btn-outline:hover { background: rgba(31,58,43,.07); border-color: #1f3a2b; }
+  .btn-outline { border: 1px solid rgba(31,58,43,.4); color: var(--c-main); background: transparent; font-weight: 600; }
+  .btn-outline:hover { background: rgba(31,58,43,.07); border-color: var(--c-main); }
   .btn-outline-light { border: 1px solid rgba(244,240,230,.45); color: #f4f0e6; background: rgba(255,255,255,.06); backdrop-filter: blur(4px); font-weight: 600; }
   .btn-outline-light:hover { background: rgba(255,255,255,.15); border-color: rgba(244,240,230,.8); }
   .btn-sm { padding: 10px 18px; font-size: 12.5px; border-radius: 999px; }
@@ -72,23 +74,23 @@
   .panel { position: relative; border-radius: 12px; border: 1px solid var(--line); background: var(--card);
            box-shadow: 0 1px 0 rgba(255,255,255,.8) inset, 0 10px 28px -18px rgba(31,58,43,.38);
            transition: transform .25s, border-color .25s, box-shadow .25s; }
-  .panel::before { content: ''; position: absolute; left: 0; right: 0; top: 0; height: 3px; border-radius: 12px 12px 0 0; background: linear-gradient(90deg, #2f5a42, #8fa88f 60%, #a98a4d); opacity: .9; }
+  .panel::before { content: ''; position: absolute; left: 0; right: 0; top: 0; height: 3px; border-radius: 12px 12px 0 0; background: linear-gradient(90deg, var(--c-mid), #8fa88f 60%, #a98a4d); opacity: .9; }
   .panel:hover { transform: translateY(-2px); border-color: #a9bba7; box-shadow: 0 20px 44px -22px rgba(31,58,43,.55); }
   .panel-static:hover { transform: none; border-color: var(--line); box-shadow: 0 1px 0 rgba(255,255,255,.8) inset, 0 10px 28px -18px rgba(31,58,43,.38); }
   .on-dark .panel { box-shadow: none; }
   .on-dark .panel:hover { border-color: rgba(217,191,133,.5); box-shadow: 0 20px 44px -22px rgba(0,0,0,.6); }
   .on-dark .panel-static:hover { border-color: var(--line); box-shadow: none; }
 
-  .ibox { width: 40px; height: 40px; border-radius: 8px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; color: #2f5a42; background: #dfe7da; border: 1px solid #c3d1bd; }
+  .ibox { width: 40px; height: 40px; border-radius: 8px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; color: var(--c-mid); background: #dfe7da; border: 1px solid #c3d1bd; }
   .on-dark .ibox { color: #e6dfc8; background: rgba(241,237,226,.1); border-color: rgba(241,237,226,.25); }
 
   /* Bandas */
   .band-bg2 { background: var(--bg2); border-block: 1px solid var(--line); }
-  .band-green { background: radial-gradient(70% 120% at 0% 0%, rgba(143,168,143,.24), transparent 60%), radial-gradient(50% 90% at 100% 100%, rgba(169,138,77,.18), transparent 60%), linear-gradient(180deg, #26442f, #1a3023); }
+  .band-green { background: radial-gradient(70% 120% at 0% 0%, rgba(143,168,143,.24), transparent 60%), radial-gradient(50% 90% at 100% 100%, rgba(169,138,77,.18), transparent 60%), linear-gradient(180deg, #26442f, var(--c-band2)); }
   .hairline { height: 1px; background: linear-gradient(90deg, transparent, rgba(217,191,133,.6), transparent); }
   .hero-wash { background: linear-gradient(90deg, rgba(16,35,26,.84) 0%, rgba(16,35,26,.5) 45%, rgba(16,35,26,.12) 100%), radial-gradient(50% 70% at 100% 0%, rgba(169,138,77,.22), transparent 60%); }
   .cta-banner { border-radius: 16px; border: 1px solid rgba(217,191,133,.42); box-shadow: 0 26px 64px -26px rgba(16,35,26,.8);
-                background: radial-gradient(60% 130% at 100% 0%, rgba(169,138,77,.3), transparent 60%), linear-gradient(135deg, #34674c 0%, #1f3a2b 55%, #14261c 100%); }
+                background: radial-gradient(60% 130% at 100% 0%, rgba(169,138,77,.3), transparent 60%), linear-gradient(135deg, var(--c-cta) 0%, var(--c-main) 55%, var(--c-dark) 100%); }
 
   /* Barra fija: transparente sobre el hero, hueso al hacer scroll */
   #topbar { background: linear-gradient(180deg, rgba(16,35,26,.6), rgba(16,35,26,.18)); backdrop-filter: blur(8px); border-bottom: 1px solid rgba(241,237,226,.18); transition: background .3s, box-shadow .3s, border-color .3s; }
@@ -97,23 +99,23 @@
   #topbar .nav-link { color: rgba(244,240,230,.8); }
   #topbar .nav-link:hover { color: #fff; background: rgba(255,255,255,.12); }
   #topbar .nav-active { color: #fff; background: rgba(244,240,230,.18); box-shadow: inset 0 0 0 1px rgba(244,240,230,.4); }
-  #topbar .btn-nav { background: #f4f0e6; color: #1f3a2b; }
+  #topbar .btn-nav { background: #f4f0e6; color: var(--c-main); }
   #topbar.is-solid { background: rgba(244,240,230,.9); backdrop-filter: blur(14px); border-bottom-color: rgba(31,58,43,.14); box-shadow: 0 10px 30px -20px rgba(31,58,43,.6); }
-  #topbar.is-solid .brand-name { color: #1f3a2b; }
+  #topbar.is-solid .brand-name { color: var(--c-main); }
   #topbar.is-solid .brand-sub { color: #8a6f36; }
   #topbar.is-solid .nav-link { color: #4a5b50; }
-  #topbar.is-solid .nav-link:hover { color: #1f3a2b; background: rgba(31,58,43,.08); }
-  #topbar.is-solid .nav-active { color: #1f3a2b; background: rgba(31,58,43,.1); box-shadow: inset 0 0 0 1px rgba(31,58,43,.28); }
-  #topbar.is-solid .btn-nav { background: linear-gradient(135deg, #3a7355, #1f3a2b); color: #f4f0e6; }
+  #topbar.is-solid .nav-link:hover { color: var(--c-main); background: rgba(31,58,43,.08); }
+  #topbar.is-solid .nav-active { color: var(--c-main); background: rgba(31,58,43,.1); box-shadow: inset 0 0 0 1px rgba(31,58,43,.28); }
+  #topbar.is-solid .btn-nav { background: linear-gradient(135deg, var(--c-light), var(--c-main)); color: #f4f0e6; }
   .nav-link { padding: 8px 16px; border-radius: 999px; transition: all .2s; }
-  .logo-fb { background: linear-gradient(135deg, #3a7355, #1f3a2b); border: 1px solid rgba(217,191,133,.6); color: #f4f0e6; }
+  .logo-fb { background: linear-gradient(135deg, var(--c-light), var(--c-main)); border: 1px solid rgba(217,191,133,.6); color: #f4f0e6; }
 
   .chip { padding: 8px 16px; border-radius: 999px; font-size: 12.5px; font-weight: 600; border: 1px solid #cdc5b0; color: var(--muted); transition: all .2s; }
-  .chip:hover { color: #1f3a2b; border-color: #2f5a42; background: rgba(47,90,66,.07); }
-  .chip-on { color: #f4f0e6; background: linear-gradient(135deg, #3a7355, #1f3a2b); border-color: #1f3a2b; box-shadow: 0 8px 18px -10px rgba(31,58,43,.8); }
-  .chip-on:hover { color: #f4f0e6; background: linear-gradient(135deg, #3a7355, #1f3a2b); }
+  .chip:hover { color: var(--c-main); border-color: var(--c-mid); background: rgba(47,90,66,.07); }
+  .chip-on { color: #f4f0e6; background: linear-gradient(135deg, var(--c-light), var(--c-main)); border-color: var(--c-main); box-shadow: 0 8px 18px -10px rgba(31,58,43,.8); }
+  .chip-on:hover { color: #f4f0e6; background: linear-gradient(135deg, var(--c-light), var(--c-main)); }
 
-  .tag { background: rgba(251,249,243,.93); color: #2f5a42; border: 1px solid rgba(31,58,43,.18); font-size: 10px; letter-spacing: .12em; text-transform: uppercase; font-weight: 700; padding: 3px 10px; border-radius: 999px; backdrop-filter: blur(6px); }
+  .tag { background: rgba(251,249,243,.93); color: var(--c-mid); border: 1px solid rgba(31,58,43,.18); font-size: 10px; letter-spacing: .12em; text-transform: uppercase; font-weight: 700; padding: 3px 10px; border-radius: 999px; backdrop-filter: blur(6px); }
   .st { display: inline-block; font-size: 10px; letter-spacing: .12em; text-transform: uppercase; font-weight: 700; padding: 3px 10px; border-radius: 999px; border: 1px solid; }
   .st-ok   { background: #e1ecd9; color: #2b5a3f; border-color: #b4cca9; }
   .st-res  { background: #f2e7c9; color: #7a5f22; border-color: #d9c288; }
@@ -121,7 +123,7 @@
 
   .input { margin-top: 8px; width: 100%; background: var(--card); border: 1px solid #d3ccb8; border-radius: 8px; padding: 12px 16px; font-size: 13.5px; color: var(--ink); transition: border-color .2s, box-shadow .2s; }
   .input::placeholder { color: #8d9990; }
-  .input:focus { outline: none; border-color: #2f5a42; box-shadow: 0 0 0 3px rgba(47,90,66,.16); }
+  .input:focus { outline: none; border-color: var(--c-mid); box-shadow: 0 0 0 3px rgba(47,90,66,.16); }
 
   /* Placeholders de imagen */
   .ph { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px; text-align: center; padding: 12px;
@@ -134,7 +136,7 @@
   .ph small { font-size: 10px; letter-spacing: .08em; color: #7d8b80; }
   .ph-dark { background: radial-gradient(120% 90% at 50% 0%, rgba(143,168,143,.22), transparent 60%),
                          repeating-linear-gradient(135deg, rgba(255,255,255,.035) 0 12px, transparent 12px 24px),
-                         linear-gradient(160deg, #2c4a38, #14261c);
+                         linear-gradient(160deg, #2c4a38, var(--c-dark));
              box-shadow: inset 0 0 0 1px rgba(241,237,226,.12); }
   .ph-dark .material-symbols-outlined { color: rgba(217,191,133,.6); }
   .ph-dark b { color: #b4c4b6; }
@@ -168,7 +170,7 @@
 </header>
 
 <!-- ============ HERO ============ -->
-<section id="hero" class="on-dark relative w-full overflow-hidden min-h-[480px] flex flex-col justify-between" style="background:#14261c">
+<section id="hero" class="on-dark relative w-full overflow-hidden min-h-[480px] flex flex-col justify-between" style="background:var(--c-dark)">
   <div class="absolute inset-0">
     <div class="ph ph-dark"><span class="material-symbols-outlined">image</span><b>Imagen de portada</b><small>1920 × 1080 px · 16:9</small></div>
     <div id="hero-bg" class="absolute inset-0 bg-cover bg-center filter contrast-[1.05] brightness-[0.92]"></div>
@@ -365,7 +367,7 @@
           <span class="eyebrow">Cómo llegar</span>
           <h2 class="ink font-sans text-xl font-bold tracking-tight">Visitas al campo</h2>
           <p id="dir-texto" class="muted text-[13.5px] leading-relaxed"></p>
-          <p class="text-[12.5px] font-semibold flex items-center gap-1.5" style="color:#2f5a42"><span class="material-symbols-outlined text-[16px] brass">schedule</span><span id="horario-card"></span></p>
+          <p class="text-[12.5px] font-semibold flex items-center gap-1.5" style="color:var(--c-mid)"><span class="material-symbols-outlined text-[16px] brass">schedule</span><span id="horario-card"></span></p>
           <p class="muted text-[12px]">Recomendamos avisar antes para recibirte con los animales listos.</p>
         </div>
       </div>
@@ -386,7 +388,7 @@
 </div>
 
 <!-- ============ FOOTER ============ -->
-<footer class="on-dark relative w-full pt-16 pb-10" style="background:#14261c">
+<footer class="on-dark relative w-full pt-16 pb-10" style="background:var(--c-dark)">
   <div class="hairline absolute top-0 inset-x-0"></div>
   <div class="max-w-7xl mx-auto px-6 sm:px-8">
     <div class="grid grid-cols-1 md:grid-cols-4 gap-10 pb-12">
@@ -658,7 +660,7 @@ function renderStatic() {
   ];
   $('#canales').innerHTML = canales.map(c => {
     const inner = `${ICONBOX(c.i)}<h3 class="ink font-sans text-lg font-bold">${c.t}</h3><p class="muted text-[13px] leading-relaxed break-words">${c.d}</p>` +
-      (c.cta ? `<span class="text-[12px] font-semibold inline-flex items-center gap-1" style="color:#2f5a42">${c.cta} <span class="material-symbols-outlined text-[16px] brass group-hover:translate-x-1 transition-transform">arrow_forward</span></span>` : `<span class="text-[12px] font-semibold" style="color:#2f5a42">${c.note}</span>`);
+      (c.cta ? `<span class="text-[12px] font-semibold inline-flex items-center gap-1" style="color:var(--c-mid)">${c.cta} <span class="material-symbols-outlined text-[16px] brass group-hover:translate-x-1 transition-transform">arrow_forward</span></span>` : `<span class="text-[12px] font-semibold" style="color:var(--c-mid)">${c.note}</span>`);
     return c.href
       ? `<a href="${c.href}" ${c.ext ? 'target="_blank" rel="noopener"' : ''} class="group panel p-6 space-y-3.5 block">${inner}</a>`
       : `<div class="panel panel-static p-6 space-y-3.5">${inner}</div>`;
@@ -716,7 +718,7 @@ function renderAnimales() {
           <p class="brass text-[12px] font-semibold tracking-wide mt-0.5">${a.raza} · ${a.rp}</p>
         </div>
         <dl class="grid grid-cols-2 gap-2.5 text-[12.5px]">${a.f.slice(0, 4).map(([k, v]) => `<div class="rounded-md p-3" style="background:#f1ede1;border:1px solid #e2dbc9"><dt class="muted text-[10.5px] uppercase tracking-wider">${k}</dt><dd class="ink font-bold mt-0.5">${v}</dd></div>`).join('')}</dl>
-        <div class="flex flex-wrap gap-1.5">${a.tags.map(t => `<span class="text-[10.5px] font-semibold px-2.5 py-1 rounded-full" style="color:#2f5a42;background:#e6ecde;border:1px solid #c9d6c0">${t}</span>`).join('')}</div>
+        <div class="flex flex-wrap gap-1.5">${a.tags.map(t => `<span class="text-[10.5px] font-semibold px-2.5 py-1 rounded-full" style="color:var(--c-mid);background:#e6ecde;border:1px solid #c9d6c0">${t}</span>`).join('')}</div>
       </div>
       <div class="pt-5 mt-5 flex items-center justify-between gap-3" style="border-top:1px solid var(--line)">
         <div><p class="muted text-[10.5px] uppercase tracking-wider">Precio</p><p class="ink text-[13px] font-bold">${a.precio}</p></div>
@@ -730,12 +732,12 @@ function renderLotes() {
   const lista = LOTES.filter(l => catState.value === 'todos' || l[1] === catState.value)
                      .filter(l => estadoState.value === 'todos' || l[6] === estadoState.value);
   $('#lotes-body').innerHTML = lista.length ? lista.map((l, i) => `
-    <tr class="transition-colors hover:bg-[#2f5a42]/[0.06]" style="${i < lista.length - 1 ? 'border-bottom:1px solid var(--line)' : ''}">
-      <td class="px-5 py-4 font-bold" style="color:#2f5a42">${l[0]}</td>
+    <tr class="transition-colors hover:bg-[var(--c-mid)]/[0.06]" style="${i < lista.length - 1 ? 'border-bottom:1px solid var(--line)' : ''}">
+      <td class="px-5 py-4 font-bold" style="color:var(--c-mid)">${l[0]}</td>
       <td class="ink px-5 py-4">${l[2]}</td><td class="muted px-5 py-4">${l[3]}</td>
       <td class="muted px-5 py-4">${l[4]}</td><td class="muted px-5 py-4">${l[5]}</td>
       <td class="px-5 py-4">${ST(l[6])}</td>
-      <td class="px-5 py-4 text-right"><a class="text-[12px] font-bold whitespace-nowrap hover:underline" style="color:#2f5a42" target="_blank" rel="noopener" href="${WA_URL('Hola, me interesa el lote ' + l[0] + ' (' + l[2] + ', ' + l[3] + ').')}">Consultar →</a></td>
+      <td class="px-5 py-4 text-right"><a class="text-[12px] font-bold whitespace-nowrap hover:underline" style="color:var(--c-mid)" target="_blank" rel="noopener" href="${WA_URL('Hola, me interesa el lote ' + l[0] + ' (' + l[2] + ', ' + l[3] + ').')}">Consultar →</a></td>
     </tr>`).join('') : `<tr><td colspan="7" class="muted px-5 py-10 text-center">No hay lotes con ese filtro.</td></tr>`;
 }
 
@@ -746,12 +748,12 @@ function renderFicha() {
   const consulta = WA_URL(`Hola, me interesa ${a.tag.toLowerCase()} "${a.n}" (${a.raza}, ${a.rp}). ¿Sigue disponible?`);
   const fotos = WA_URL(`Hola, ¿me pasás fotos y video de "${a.n}" (${a.raza}, ${a.rp})?`);
   $('#modal-body').innerHTML = `
-    <button id="modal-x" aria-label="Cerrar" class="absolute top-3 right-3 z-10 w-9 h-9 rounded-full flex items-center justify-center transition-colors hover:bg-white" style="background:rgba(244,240,230,.9);border:1px solid rgba(31,58,43,.25);color:#1f3a2b"><span class="material-symbols-outlined text-[20px]">close</span></button>
+    <button id="modal-x" aria-label="Cerrar" class="absolute top-3 right-3 z-10 w-9 h-9 rounded-full flex items-center justify-center transition-colors hover:bg-white" style="background:rgba(244,240,230,.9);border:1px solid rgba(31,58,43,.25);color:var(--c-main)"><span class="material-symbols-outlined text-[20px]">close</span></button>
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-7">
       <div class="space-y-3">
         <div class="relative aspect-[4/3] rounded-lg overflow-hidden" style="border:1px solid var(--line)">${MEDIA(slides[fotoIdx][0], slides[fotoIdx][1], '1200 × 900 px · 4:3')}</div>
         <div class="grid grid-cols-3 gap-3">${slides.map(([src, l], k) => `
-          <button data-foto="${k}" class="relative aspect-[4/3] rounded-md overflow-hidden transition-all ${k === fotoIdx ? 'opacity-100' : 'opacity-60 hover:opacity-100'}" style="border:2px solid ${k === fotoIdx ? '#2f5a42' : 'var(--line)'}">${MEDIA(src, l, '')}</button>`).join('')}</div>
+          <button data-foto="${k}" class="relative aspect-[4/3] rounded-md overflow-hidden transition-all ${k === fotoIdx ? 'opacity-100' : 'opacity-60 hover:opacity-100'}" style="border:2px solid ${k === fotoIdx ? 'var(--c-mid)' : 'var(--line)'}">${MEDIA(src, l, '')}</button>`).join('')}</div>
       </div>
       <div class="space-y-5 pr-0 lg:pr-6">
         <div>
@@ -760,8 +762,8 @@ function renderFicha() {
           <p class="brass text-[13px] font-semibold tracking-wide mt-1">${a.raza} · ${a.rp}</p>
         </div>
         <div class="rounded-lg px-5 py-4 flex items-center justify-between" style="background:#e3ebdc;border:1px solid #c3d1bd">
-          <span class="text-[11px] uppercase tracking-[0.16em] font-bold" style="color:#2f5a42">Precio</span>
-          <span class="text-[16px] font-bold" style="color:#1f3a2b">${a.precio}</span>
+          <span class="text-[11px] uppercase tracking-[0.16em] font-bold" style="color:var(--c-mid)">Precio</span>
+          <span class="text-[16px] font-bold" style="color:var(--c-main)">${a.precio}</span>
         </div>
         <dl class="text-[13px]">${a.f.map(([k, v], r) => `<div class="flex items-center justify-between gap-4 py-2.5" style="${r ? 'border-top:1px solid var(--line)' : ''}"><dt class="muted">${k}</dt><dd class="ink font-semibold text-right">${v}</dd></div>`).join('')}</dl>
         <p class="muted text-[13.5px] leading-relaxed">${a.obs}</p>
@@ -923,6 +925,12 @@ async function cargarDatosDesdeSupabase() {
   BRAND.nombre = cfg.site_title || cfg.nombre || BRAND.nombre;
   BRAND.sub = cfg.site_subtitle || cfg.sub || BRAND.sub;
 
+
+  ['dark', 'main', 'mid', 'light', 'band1', 'band2', 'cta'].forEach(k => {
+    if (cfg['color_' + k]) document.documentElement.style.setProperty('--c-' + k, cfg['color_' + k]);
+  });
+
+  
   if (cfg.about_title) ABOUT.titulo = cfg.about_title;
   if (cfg.about_text) ABOUT.texto = cfg.about_text;
   if (cfg.about_main) IMG.aboutMain = cfg.about_main;
