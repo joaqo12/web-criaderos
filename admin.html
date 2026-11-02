@@ -81,6 +81,26 @@
   </form>
 
   <div id="a-lista"></div>
+    <h2 style="margin-top:36px">Lotes</h2>
+  <button id="l-nuevo">+ Nuevo lote</button>
+  <div id="l-msg" class="err"></div>
+
+  <form id="l-form" class="card hidden">
+    <div class="grid2">
+      <label>Código (ej: L-01)<input id="l-code" required/></label>
+      <label>Categoría<select id="l-cat"></select></label>
+      <label>Descripción<input id="l-desc"/></label>
+      <label>Raza<input id="l-breed"/></label>
+      <label>Cantidad<input id="l-qty" type="number" min="0"/></label>
+      <label>Peso promedio (ej: 360 kg)<input id="l-weight"/></label>
+      <label>Estado<select id="l-status"></select></label>
+    </div>
+    <button type="submit">Guardar</button>
+    <button type="button" class="sec" id="l-cancel">Cancelar</button>
+    <div id="l-form-msg" class="err"></div>
+  </form>
+
+  <div id="l-lista"></div>
 </div>
 
 <script>
@@ -104,7 +124,7 @@ async function iniciar() {
   SITE = asign[0].site_id;
   $('#app-title').textContent = asign[0].sites ? asign[0].sites.name : SITE;
   $('#app-user').textContent = 'Sesión iniciada como ' + session.user.email;
-  $('#login').classList.add('hidden'); $('#app').classList.remove('hidden');   cargarAnimales();
+  $('#login').classList.add('hidden'); $('#app').classList.remove('hidden');   cargarAnimales(); cargarLotes();
 }
 
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -205,7 +225,61 @@ $('#a-lista').addEventListener('click', async e => {
     if (error) $('#a-msg').textContent = error.message; else cargarAnimales();
   }
 });
-  
+  let LOTS = [], LEDIT = null;
+$('#l-cat').innerHTML = CATS.map(c => `<option>${c}</option>`).join('');
+$('#l-status').innerHTML = ESTADOS.map(c => `<option>${c}</option>`).join('');
+
+function abrirLote(l) {
+  LEDIT = l ? l.id : null;
+  $('#l-code').value = l?.lot_code || '';
+  $('#l-cat').value = l?.category || CATS[0];
+  $('#l-desc').value = l?.description || '';
+  $('#l-breed').value = l?.breed || '';
+  $('#l-qty').value = l?.quantity ?? '';
+  $('#l-weight').value = l?.average_weight || '';
+  $('#l-status').value = l?.status || ESTADOS[0];
+  $('#l-form-msg').textContent = '';
+  $('#l-form').classList.remove('hidden');
+  $('#l-form').scrollIntoView({ behavior: 'smooth' });
+}
+
+async function cargarLotes() {
+  const { data, error } = await sb.from('lots').select('*').eq('site_id', SITE).order('lot_code');
+  if (error) { $('#l-msg').textContent = error.message; return; }
+  LOTS = data;
+  $('#l-lista').innerHTML = data.length ? data.map(l => `
+    <div class="fila">
+      <div style="flex:1"><b>${esc(l.lot_code)}</b> · ${esc(l.description)}<br><small>${esc(l.category)} · ${esc(l.breed)} · ${esc(l.quantity)} animales · ${esc(l.average_weight)} · ${esc(l.status)}</small></div>
+      <div class="acc"><button data-led="${l.id}">Editar</button><button class="rojo" data-ldel="${l.id}">Borrar</button></div>
+    </div>`).join('') : '<p>No hay lotes todavía.</p>';
+}
+
+$('#l-nuevo').onclick = () => abrirLote(null);
+$('#l-cancel').onclick = () => $('#l-form').classList.add('hidden');
+
+$('#l-form').addEventListener('submit', async e => {
+  e.preventDefault();
+  const row = {
+    site_id: SITE,
+    lot_code: $('#l-code').value.trim(), category: $('#l-cat').value,
+    description: $('#l-desc').value.trim(), breed: $('#l-breed').value.trim(),
+    quantity: parseInt($('#l-qty').value) || 0,
+    average_weight: $('#l-weight').value.trim(), status: $('#l-status').value
+  };
+  const { error } = LEDIT ? await sb.from('lots').update(row).eq('id', LEDIT) : await sb.from('lots').insert(row);
+  if (error) { $('#l-form-msg').textContent = 'Error: ' + error.message; return; }
+  $('#l-form').classList.add('hidden');
+  cargarLotes();
+});
+
+$('#l-lista').addEventListener('click', async e => {
+  const ed = e.target.dataset.led, del = e.target.dataset.ldel;
+  if (ed) abrirLote(LOTS.find(l => l.id == ed));
+  if (del && confirm('¿Borrar este lote? No se puede deshacer.')) {
+    const { error } = await sb.from('lots').delete().eq('id', del).eq('site_id', SITE);
+    if (error) $('#l-msg').textContent = error.message; else cargarLotes();
+  }
+});
 $('#f-login').addEventListener('submit', async e => {
   e.preventDefault();
   $('#err').textContent = '';
