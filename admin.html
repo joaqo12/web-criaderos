@@ -118,9 +118,9 @@ $('#a-status').innerHTML = ESTADOS.map(c => `<option>${c}</option>`).join('');
 async function subirFoto(file) {
   const ext = (file.name.split('.').pop() || 'jpg').toLowerCase();
   const path = `${SITE}/${Date.now()}-${Math.random().toString(36).slice(2, 7)}.${ext}`;
-  const { error } = await sb.storage.from('animale').upload(path, file, { cacheControl: '3600' });
+  const { error } = await sb.storage.from('animales').upload(path, file, { cacheControl: '3600' });
   if (error) throw error;
-  return sb.storage.from('animale').getPublicUrl(path).data.publicUrl;
+  return sb.storage.from('animales').getPublicUrl(path).data.publicUrl;
 }
 
 function addAttr(k = '', v = '') {
