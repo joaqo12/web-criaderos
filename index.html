@@ -86,7 +86,7 @@
 
   /* Bandas */
   .band-bg2 { background: var(--bg2); border-block: 1px solid var(--line); }
-  .band-green { background: radial-gradient(70% 120% at 0% 0%, rgba(143,168,143,.24), transparent 60%), radial-gradient(50% 90% at 100% 100%, rgba(169,138,77,.18), transparent 60%), linear-gradient(180deg, #26442f, var(--c-band2)); }
+  .band-green { background: radial-gradient(70% 120% at 0% 0%, rgba(143,168,143,.24), transparent 60%), radial-gradient(50% 90% at 100% 100%, rgba(169,138,77,.18), transparent 60%), linear-gradient(180deg, var(--c-band1), var(--c-band2)); }
   .hairline { height: 1px; background: linear-gradient(90deg, transparent, rgba(217,191,133,.6), transparent); }
   .hero-wash { background: linear-gradient(90deg, rgba(16,35,26,.84) 0%, rgba(16,35,26,.5) 45%, rgba(16,35,26,.12) 100%), radial-gradient(50% 70% at 100% 0%, rgba(169,138,77,.22), transparent 60%); }
   .cta-banner { border-radius: 16px; border: 1px solid rgba(217,191,133,.42); box-shadow: 0 26px 64px -26px rgba(16,35,26,.8);
@@ -949,6 +949,8 @@ async function cargarDatosDesdeSupabase() {
   if (cfg.cria_title) secCria.querySelector('h2').innerHTML = cfg.cria_title;
   if (cfg.cria_text) secCria.querySelector('p').textContent = cfg.cria_text;
   const { data: par } = await supabaseClient.from('partners').select('*').order('sort_order');   if (par && par.length) { PARTNERS.length = 0; par.forEach(p => PARTNERS.push({ n: p.name, src: p.image_url || '' })); }
+   const secGal = document.querySelector('#home-gallery').closest('section');
+  
   if (cfg.gallery_title) secGal.querySelector('h2').innerHTML = cfg.gallery_title;
 
   const { data: gal, error: galErr } = await supabaseClient.from('gallery').select('*').order('sort_order');
