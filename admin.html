@@ -14,6 +14,23 @@
   button { margin-top: 18px; padding: 10px 18px; border: 0; border-radius: 8px; background: #1f3a2b; color: #f4f0e6; font-weight: 700; cursor: pointer; }
   .err { color: #a33; font-size: 13px; margin-top: 12px; min-height: 16px; }
   .hidden { display: none; }
+
+  .wrap { max-width: 960px; margin: 24px auto; padding: 0 16px; }
+  .top { display: flex; justify-content: space-between; align-items: center; }
+  .card { background: #fbf9f3; border: 1px solid #dcd5c3; border-radius: 12px; padding: 20px; margin: 16px 0; }
+  .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  textarea, select { width: 100%; box-sizing: border-box; margin-top: 6px; padding: 10px 12px; border: 1px solid #d3ccb8; border-radius: 8px; font-size: 14px; font-family: inherit; }
+  .fila { display: flex; align-items: center; gap: 14px; background: #fbf9f3; border: 1px solid #dcd5c3; border-radius: 10px; padding: 10px; margin-top: 10px; }
+  .fila img { width: 64px; height: 48px; object-fit: cover; border-radius: 6px; background: #ddd; }
+  .fila div:nth-child(2) { flex: 1; }
+  .acc { display: flex; gap: 8px; }
+  .acc button, .sec { margin-top: 0; padding: 7px 12px; background: #fff; color: #1f3a2b; border: 1px solid #1f3a2b; }
+  .rojo { color: #a33 !important; border-color: #a33 !important; }
+  .attr { display: flex; gap: 8px; margin-top: 8px; }
+  .fotos { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+  .fotos img { width: 100%; aspect-ratio: 4/3; object-fit: cover; border-radius: 8px; background: #e4e9db; margin-top: 6px; }
+  @media (max-width: 600px) { .grid2, .fotos { grid-template-columns: 1fr; } }
+  
 </style>
 </head>
 <body>
@@ -28,10 +45,42 @@
   </form>
 </div>
 
-<div id="app" class="box hidden">
-  <h1 id="app-title"></h1>
-  <p id="app-user"></p>
-  <button id="salir">Cerrar sesión</button>
+<div id="app" class="wrap hidden">
+  <div class="top">
+    <div><h1 id="app-title"></h1><small id="app-user"></small></div>
+    <button id="salir">Cerrar sesión</button>
+  </div>
+  <h2>Animales</h2>
+  <button id="a-nuevo">+ Nuevo animal</button>
+  <div id="a-msg" class="err"></div>
+
+  <form id="a-form" class="card hidden">
+    <div class="grid2">
+      <label>Nombre<input id="a-name" required/></label>
+      <label>Categoría<select id="a-cat"></select></label>
+      <label>Etiqueta (ej: Toro)<input id="a-tag"/></label>
+      <label>Raza<input id="a-breed"/></label>
+      <label>RP / Lote<input id="a-rp"/></label>
+      <label>Estado<select id="a-status"></select></label>
+      <label>Precio (texto, ej: Consultar)<input id="a-price"/></label>
+      <label>Etiquetas (separadas por coma)<input id="a-tags"/></label>
+    </div>
+    <label>Observaciones<textarea id="a-obs" rows="3"></textarea></label>
+    <label>Datos de la ficha</label>
+    <div id="a-attrs"></div>
+    <button type="button" class="sec" id="a-add-attr">+ Agregar dato</button>
+    <label>Fotos (principal, 2 y 3)</label>
+    <div class="fotos">
+      <div><input type="file" accept="image/*" data-foto="0"/><img id="foto-0"/></div>
+      <div><input type="file" accept="image/*" data-foto="1"/><img id="foto-1"/></div>
+      <div><input type="file" accept="image/*" data-foto="2"/><img id="foto-2"/></div>
+    </div>
+    <button type="submit">Guardar</button>
+    <button type="button" class="sec" id="a-cancel">Cancelar</button>
+    <div id="a-form-msg" class="err"></div>
+  </form>
+
+  <div id="a-lista"></div>
 </div>
 
 <script>
@@ -55,9 +104,108 @@ async function iniciar() {
   SITE = asign[0].site_id;
   $('#app-title').textContent = asign[0].sites ? asign[0].sites.name : SITE;
   $('#app-user').textContent = 'Sesión iniciada como ' + session.user.email;
-  $('#login').classList.add('hidden'); $('#app').classList.remove('hidden');
+  $('#login').classList.add('hidden'); $('#app').classList.remove('hidden');   cargarAnimales();
 }
 
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const CATS = ['toros', 'vientres', 'vaquillonas', 'terneros'];
+const ESTADOS = ['Disponible', 'Reservado', 'Plantel'];
+let LISTA = [], EDIT = null, FOTOS = ['', '', ''];
+
+$('#a-cat').innerHTML = CATS.map(c => `<option>${c}</option>`).join('');
+$('#a-status').innerHTML = ESTADOS.map(c => `<option>${c}</option>`).join('');
+
+async function subirFoto(file) {
+  const ext = (file.name.split('.').pop() || 'jpg').toLowerCase();
+  const path = `${SITE}/${Date.now()}-${Math.random().toString(36).slice(2, 7)}.${ext}`;
+  const { error } = await sb.storage.from('animale').upload(path, file, { cacheControl: '3600' });
+  if (error) throw error;
+  return sb.storage.from('animale').getPublicUrl(path).data.publicUrl;
+}
+
+function addAttr(k = '', v = '') {
+  const d = document.createElement('div'); d.className = 'attr';
+  d.innerHTML = `<input placeholder="Dato (ej: Edad)" value="${esc(k)}"/><input placeholder="Valor (ej: 3 años)" value="${esc(v)}"/><button type="button" class="sec rojo">✕</button>`;
+  d.querySelector('button').onclick = () => d.remove();
+  $('#a-attrs').appendChild(d);
+}
+
+function pintarFotos() {
+  FOTOS.forEach((u, i) => { const im = $('#foto-' + i); im.src = u || ''; im.style.visibility = u ? 'visible' : 'hidden'; });
+}
+
+function abrirForm(a) {
+  EDIT = a ? a.id : null;
+  $('#a-name').value = a?.name || '';
+  $('#a-cat').value = a?.category || CATS[0];
+  $('#a-tag').value = a?.tag || '';
+  $('#a-breed').value = a?.breed || '';
+  $('#a-rp').value = a?.rp || '';
+  $('#a-status').value = a?.status || ESTADOS[0];
+  $('#a-price').value = a?.price || '';
+  $('#a-tags').value = (a?.tags || []).join(', ');
+  $('#a-obs').value = a?.observations || '';
+  $('#a-attrs').innerHTML = '';
+  Object.entries(a?.attributes || {}).forEach(([k, v]) => addAttr(k, v));
+  if (!a) addAttr();
+  FOTOS = [a?.main_image_url || '', (a?.gallery_urls || [])[0] || '', (a?.gallery_urls || [])[1] || ''];
+  document.querySelectorAll('[data-foto]').forEach(i => i.value = '');
+  pintarFotos();
+  $('#a-form-msg').textContent = '';
+  $('#a-form').classList.remove('hidden');
+  $('#a-form').scrollIntoView({ behavior: 'smooth' });
+}
+
+async function cargarAnimales() {
+  const { data, error } = await sb.from('animals').select('*').eq('site_id', SITE).order('id');
+  if (error) { $('#a-msg').textContent = error.message; return; }
+  LISTA = data;
+  $('#a-lista').innerHTML = data.length ? data.map(a => `
+    <div class="fila">
+      <img src="${esc(a.main_image_url)}" onerror="this.style.visibility='hidden'"/>
+      <div><b>${esc(a.name)}</b><br><small>${esc(a.category)} · ${esc(a.status)} · ${esc(a.breed)}</small></div>
+      <div class="acc"><button data-ed="${a.id}">Editar</button><button class="rojo" data-del="${a.id}">Borrar</button></div>
+    </div>`).join('') : '<p>No hay animales todavía.</p>';
+}
+
+$('#a-nuevo').onclick = () => abrirForm(null);
+$('#a-cancel').onclick = () => $('#a-form').classList.add('hidden');
+$('#a-add-attr').onclick = () => addAttr();
+
+document.querySelectorAll('[data-foto]').forEach(inp => inp.addEventListener('change', async () => {
+  const f = inp.files[0]; if (!f) return;
+  $('#a-form-msg').textContent = 'Subiendo foto...';
+  try { FOTOS[+inp.dataset.foto] = await subirFoto(f); pintarFotos(); $('#a-form-msg').textContent = ''; }
+  catch (e) { $('#a-form-msg').textContent = 'Error al subir: ' + e.message; }
+}));
+
+$('#a-form').addEventListener('submit', async e => {
+  e.preventDefault();
+  const attrs = {};
+  document.querySelectorAll('#a-attrs .attr').forEach(r => { const [k, v] = r.querySelectorAll('input'); if (k.value.trim()) attrs[k.value.trim()] = v.value.trim(); });
+  const row = {
+    site_id: SITE,
+    name: $('#a-name').value.trim(), category: $('#a-cat').value, tag: $('#a-tag').value.trim(),
+    breed: $('#a-breed').value.trim(), rp: $('#a-rp').value.trim(), status: $('#a-status').value,
+    price: $('#a-price').value.trim(), observations: $('#a-obs').value.trim(),
+    tags: $('#a-tags').value.split(',').map(x => x.trim()).filter(Boolean),
+    attributes: attrs, main_image_url: FOTOS[0], gallery_urls: [FOTOS[1], FOTOS[2]]
+  };
+  const { error } = EDIT ? await sb.from('animals').update(row).eq('id', EDIT) : await sb.from('animals').insert(row);
+  if (error) { $('#a-form-msg').textContent = 'Error: ' + error.message; return; }
+  $('#a-form').classList.add('hidden');
+  cargarAnimales();
+});
+
+$('#a-lista').addEventListener('click', async e => {
+  const ed = e.target.dataset.ed, del = e.target.dataset.del;
+  if (ed) abrirForm(LISTA.find(a => a.id == ed));
+  if (del && confirm('¿Borrar este animal? No se puede deshacer.')) {
+    const { error } = await sb.from('animals').delete().eq('id', del).eq('site_id', SITE);
+    if (error) $('#a-msg').textContent = error.message; else cargarAnimales();
+  }
+});
+  
 $('#f-login').addEventListener('submit', async e => {
   e.preventDefault();
   $('#err').textContent = '';
