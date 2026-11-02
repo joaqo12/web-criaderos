@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Panel de administración</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+  body { margin: 0; font-family: system-ui, sans-serif; background: #f4f0e6; color: #1d2a22; }
+  .box { max-width: 380px; margin: 12vh auto; background: #fbf9f3; border: 1px solid #dcd5c3; border-radius: 12px; padding: 28px; }
+  h1 { font-size: 20px; margin: 0 0 18px; }
+  label { display: block; font-size: 12px; font-weight: 700; margin-top: 12px; }
+  input { width: 100%; box-sizing: border-box; margin-top: 6px; padding: 10px 12px; border: 1px solid #d3ccb8; border-radius: 8px; font-size: 14px; }
+  button { margin-top: 18px; padding: 10px 18px; border: 0; border-radius: 8px; background: #1f3a2b; color: #f4f0e6; font-weight: 700; cursor: pointer; }
+  .err { color: #a33; font-size: 13px; margin-top: 12px; min-height: 16px; }
+  .hidden { display: none; }
+</style>
+</head>
+<body>
+
+<div id="login" class="box hidden">
+  <h1>Panel de administración</h1>
+  <form id="f-login">
+    <label>Email<input id="email" type="email" required autocomplete="username"/></label>
+    <label>Contraseña<input id="pass" type="password" required autocomplete="current-password"/></label>
+    <button type="submit">Entrar</button>
+    <div id="err" class="err"></div>
+  </form>
+</div>
+
+<div id="app" class="box hidden">
+  <h1 id="app-title"></h1>
+  <p id="app-user"></p>
+  <button id="salir">Cerrar sesión</button>
+</div>
+
+<script>
+const SUPABASE_URL = 'https://wavxivsalphthkmekzla.supabase.co';
+const SUPABASE_KEY = 'sb_publishable_Ugsbe8guq0pJFWiGiarZZQ__6JVV-Ix';
+const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+const $ = s => document.querySelector(s);
+let SITE = null;
+
+async function iniciar() {
+  const { data: { session } } = await sb.auth.getSession();
+  if (!session) { $('#login').classList.remove('hidden'); $('#app').classList.add('hidden'); return; }
+
+  const { data: asign } = await sb.from('site_users').select('site_id, sites(name)');
+  if (!asign || !asign.length) {
+    $('#login').classList.remove('hidden'); $('#app').classList.add('hidden');
+    $('#err').textContent = 'Este usuario no tiene ninguna cabaña asignada.';
+    await sb.auth.signOut();
+    return;
+  }
+  SITE = asign[0].site_id;
+  $('#app-title').textContent = asign[0].sites ? asign[0].sites.name : SITE;
+  $('#app-user').textContent = 'Sesión iniciada como ' + session.user.email;
+  $('#login').classList.add('hidden'); $('#app').classList.remove('hidden');
+}
+
+$('#f-login').addEventListener('submit', async e => {
+  e.preventDefault();
+  $('#err').textContent = '';
+  const { error } = await sb.auth.signInWithPassword({ email: $('#email').value.trim(), password: $('#pass').value });
+  if (error) { $('#err').textContent = 'Email o contraseña incorrectos.'; return; }
+  iniciar();
+});
+$('#salir').addEventListener('click', async () => { await sb.auth.signOut(); location.reload(); });
+
+iniciar();
+</script>
+</body>
+</html>
