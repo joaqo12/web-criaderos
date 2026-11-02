@@ -101,6 +101,19 @@
   </form>
 
   <div id="l-lista"></div>
+  <h2 style="margin-top:36px">Textos e imágenes del sitio</h2>
+  <p><small>Los textos van en "Valor". Las fotos se suben con el botón y quedan en "Imagen". Los colores (color_...) van en "Valor", por ejemplo #1f3a2b.</small></p>
+  <div id="s-msg" class="err"></div>
+  <div id="s-lista"></div>
+  <div class="card">
+    <b>Agregar una llave nueva</b>
+    <div class="grid2">
+      <label>Llave (ej: hero_title)<input id="s-newkey"/></label>
+      <label>Valor<input id="s-newval"/></label>
+    </div>
+    <button id="s-add">Agregar</button>
+  </div>
+  
 </div>
 
 <script>
@@ -124,7 +137,7 @@ async function iniciar() {
   SITE = asign[0].site_id;
   $('#app-title').textContent = asign[0].sites ? asign[0].sites.name : SITE;
   $('#app-user').textContent = 'Sesión iniciada como ' + session.user.email;
-  $('#login').classList.add('hidden'); $('#app').classList.remove('hidden');   cargarAnimales(); cargarLotes();
+  $('#login').classList.add('hidden'); $('#app').classList.remove('hidden');   cargarAnimales(); cargarLotes(); cargarSettings();
 }
 
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -280,6 +293,58 @@ $('#l-lista').addEventListener('click', async e => {
     if (error) $('#l-msg').textContent = error.message; else cargarLotes();
   }
 });
+
+async function cargarSettings() {
+  const { data, error } = await sb.from('site_settings').select('*').eq('site_id', SITE).order('key');
+  if (error) { $('#s-msg').textContent = error.message; return; }
+  $('#s-lista').innerHTML = data.map(s => `
+    <div class="card">
+      <b>${esc(s.key)}</b>
+      <label>Valor<textarea rows="2" data-f="value">${esc(s.value)}</textarea></label>
+      <label>Imagen (enlace o subir foto)<input data-f="image_url" value="${esc(s.image_url)}"/></label>
+      <input type="file" accept="image/*" data-up="${s.id}"/>
+      <img src="${esc(s.image_url)}" style="max-width:160px;display:${s.image_url ? 'block' : 'none'};margin-top:6px;border-radius:6px"/>
+      <div class="acc" style="margin-top:10px"><button data-ssave="${s.id}">Guardar</button><button class="rojo" data-sdel="${s.id}">Borrar</button></div>
+    </div>`).join('');
+}
+
+$('#s-lista').addEventListener('change', async e => {
+  if (!e.target.dataset.up) return;
+  const f = e.target.files[0]; if (!f) return;
+  const card = e.target.closest('.card');
+  $('#s-msg').textContent = 'Subiendo foto...';
+  try {
+    const url = await subirFoto(f);
+    card.querySelector('[data-f=image_url]').value = url;
+    const im = card.querySelector('img'); im.src = url; im.style.display = 'block';
+    $('#s-msg').textContent = 'Foto subida. Tocá Guardar para aplicarla.';
+  } catch (err) { $('#s-msg').textContent = 'Error al subir: ' + err.message; }
+});
+
+$('#s-lista').addEventListener('click', async e => {
+  const sv = e.target.dataset.ssave, del = e.target.dataset.sdel;
+  if (sv) {
+    const card = e.target.closest('.card');
+    const row = { value: card.querySelector('[data-f=value]').value, image_url: card.querySelector('[data-f=image_url]').value.trim() || null, updated_at: new Date().toISOString() };
+    const { error } = await sb.from('site_settings').update(row).eq('id', sv).eq('site_id', SITE);
+    $('#s-msg').textContent = error ? 'Error: ' + error.message : 'Guardado.';
+  }
+  if (del && confirm('¿Borrar esta llave? La web vuelve al texto original del código.')) {
+    const { error } = await sb.from('site_settings').delete().eq('id', del).eq('site_id', SITE);
+    if (error) $('#s-msg').textContent = error.message; else cargarSettings();
+  }
+});
+
+$('#s-add').onclick = async () => {
+  const key = $('#s-newkey').value.trim();
+  if (!key) { $('#s-msg').textContent = 'Poné el nombre de la llave.'; return; }
+  const { error } = await sb.from('site_settings').insert({ site_id: SITE, key, value: $('#s-newval').value });
+  if (error) { $('#s-msg').textContent = 'Error: ' + error.message; return; }
+  $('#s-newkey').value = ''; $('#s-newval').value = '';
+  cargarSettings();
+};
+
+  
 $('#f-login').addEventListener('submit', async e => {
   e.preventDefault();
   $('#err').textContent = '';
