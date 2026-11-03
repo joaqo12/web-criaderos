@@ -931,6 +931,16 @@ async function cargarDatosDesdeSupabase() {
   if (cfg.email) BRAND.email = cfg.email;
   if (cfg.horario) BRAND.horario = cfg.horario;
   if (cfg.direccion) BRAND.dir = cfg.direccion.split('|').map(x => x.trim());
+
+
+    if (cfg.hero_badge) PAGES.inicio.badge = cfg.hero_badge;
+  if (cfg.hero_title) PAGES.inicio.h1 = cfg.hero_title;
+  if (cfg.hero_sub) PAGES.inicio.sub = cfg.hero_sub;
+  if (!location.hash || location.hash === '#/inicio') {
+    $('#hero-badge').textContent = PAGES.inicio.badge;
+    $('#hero-title').innerHTML = PAGES.inicio.h1;
+    $('#hero-sub').textContent = PAGES.inicio.sub;
+  }
   
 
   ['dark', 'main', 'mid', 'light', 'band1', 'band2', 'cta'].forEach(k => {
