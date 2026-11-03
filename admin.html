@@ -39,6 +39,14 @@
   .fotos { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
   .fotos img { width: 100%; aspect-ratio: 4/3; object-fit: cover; border-radius: 8px; background: #e4e9db; margin-top: 6px; }
   @media (max-width: 600px) { .grid2, .fotos { grid-template-columns: 1fr; } }
+
+
+  .tabs { display: flex; flex-wrap: wrap; gap: 8px; margin: 16px 0; position: sticky; top: 0; background: #f4f0e6; padding: 8px 0; z-index: 5; }
+  .tabs button { margin-top: 0; background: #fff; color: #1f3a2b; border: 1px solid #1f3a2b; }
+  .tabs button.on { background: #1f3a2b; color: #f4f0e6; }
+  .card h3 { margin: 0 0 8px; font-size: 16px; }
+  .campo { margin-top: 14px; }
+  
   
 </style>
 </head>
@@ -164,7 +172,7 @@ async function iniciar() {
   SITE = asign[0].site_id;   $('#app-link').href = '/?c=' + SITE;   $('#app-link').textContent = location.origin + '/?c=' + SITE;
   $('#app-title').textContent = asign[0].sites ? asign[0].sites.name : SITE;
   $('#app-user').textContent = 'Sesión iniciada como ' + session.user.email;
-  $('#login').classList.add('hidden'); $('#app').classList.remove('hidden');   cargarAnimales(); cargarLotes(); cargarSettings(); GRUPOS.forEach(cargarGrupo);
+  $('#login').classList.add('hidden'); $('#app').classList.remove('hidden');   armarPanel(); cargarAnimales(); cargarLotes(); cargarSettings(); GRUPOS.forEach(cargarGrupo); cargarCampos();
 }
 
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -449,6 +457,194 @@ document.addEventListener('click', e => {
   if (e.target.tagName === 'BUTTON' && /Guardar|Borrar|Agregar/.test(e.target.textContent))
     setTimeout(() => { if (document.body.classList.contains('vista')) refrescarVista(); }, 1800);
 });
+
+const TABS = [['inicio', 'Inicio'], ['animales', 'Animales'], ['lotes', 'Lotes'], ['contacto', 'Contacto'], ['marca', 'Marca y colores'], ['avanzado', 'Avanzado']];
+const COLORES_DEF = { dark: '#14261c', main: '#1f3a2b', mid: '#2f5a42', light: '#3a7355', band1: '#26442f', band2: '#1a3023', cta: '#34674c' };
+
+const CAMPOS = {
+  inicio: [
+    { g: 'Portada (lo primero que se ve)', c: [
+      { k: 'hero_img', l: 'Foto de portada', t: 'img' },
+      { k: 'hero_badge', l: 'Etiqueta sobre el título', t: 'txt' },
+      { k: 'hero_title', l: 'Título principal', t: 'dest', sep: '<br/>' },
+      { k: 'hero_sub', l: 'Texto debajo del título', t: 'area' } ] },
+    { g: 'Sección "Qué criamos"', c: [
+      { k: 'cria_title', l: 'Título', t: 'dest', sep: '<br/>' },
+      { k: 'cria_text', l: 'Texto', t: 'area' } ] },
+    { g: 'Tarjeta grande (Toros)', c: [
+      { k: 'card_toros_img', l: 'Foto', t: 'img' },
+      { k: 'card_toros_title', l: 'Título', t: 'txt' },
+      { k: 'card_toros_text', l: 'Texto', t: 'area' } ] },
+    { g: 'Tarjeta 2 (Vientres y vaquillonas)', c: [
+      { k: 'card_vientres_img', l: 'Foto', t: 'img' },
+      { k: 'card_vientres_title', l: 'Título', t: 'txt' },
+      { k: 'card_vientres_text', l: 'Texto', t: 'area' } ] },
+    { g: 'Tarjeta 3 (Terneros)', c: [
+      { k: 'card_terneros_img', l: 'Foto', t: 'img' },
+      { k: 'card_terneros_title', l: 'Título', t: 'txt' },
+      { k: 'card_terneros_text', l: 'Texto', t: 'area' } ] },
+    { g: 'Sobre nosotros', c: [
+      { k: 'about_title', l: 'Título', t: 'txt' },
+      { k: 'about_text', l: 'Texto', t: 'area' },
+      { k: 'about_main', l: 'Foto grande', t: 'img' },
+      { k: 'about_second', l: 'Foto chica', t: 'img' },
+      { k: 'about_value_1', l: 'Punto destacado 1', t: 'val' },
+      { k: 'about_value_2', l: 'Punto destacado 2', t: 'val' },
+      { k: 'about_value_3', l: 'Punto destacado 3', t: 'val' } ] },
+    { g: 'Título de la Galería (las fotos y los logos están más abajo)', c: [
+      { k: 'gallery_title', l: 'Título', t: 'dest', sep: ' ' } ] }
+  ],
+  contacto: [
+    { g: 'Datos de contacto', c: [
+      { k: 'wa', l: 'WhatsApp (solo números, con código de país. Ej: 5491112345678)', t: 'txt' },
+      { k: 'tel', l: 'Teléfono (como se muestra en la web)', t: 'txt' },
+      { k: 'email', l: 'Email', t: 'txt' },
+      { k: 'horario', l: 'Horario de atención', t: 'txt' },
+      { k: 'direccion', l: 'Dirección', t: 'lineas' } ] }
+  ],
+  marca: [
+    { g: 'Nombre', c: [
+      { k: 'site_title', l: 'Nombre de la cabaña', t: 'txt' },
+      { k: 'site_subtitle', l: 'Frase debajo del nombre', t: 'txt' } ] },
+    { g: 'Colores', c: [
+      { k: 'color_main', l: 'Color principal', t: 'color' },
+      { k: 'color_mid', l: 'Color secundario', t: 'color' },
+      { k: 'color_light', l: 'Color claro (botones)', t: 'color' },
+      { k: 'color_dark', l: 'Fondo oscuro (portada y pie de página)', t: 'color' },
+      { k: 'color_band1', l: 'Banda de color, parte de arriba', t: 'color' },
+      { k: 'color_band2', l: 'Banda de color, parte de abajo', t: 'color' },
+      { k: 'color_cta', l: 'Banner de consulta', t: 'color' } ] }
+  ]
+};
+
+let CAMPOS_DB = {};
+const dec = s => { const t = document.createElement('textarea'); t.innerHTML = s; return t.value; };
+
+function campoHTML(f, row) {
+  const val = row ? (row.value || '') : '';
+  const img = row ? (row.image_url || '') : '';
+  const ph = 'placeholder="(vacío: la web usa el texto original)"';
+  let h = '';
+  if (f.t === 'txt') h = `<input data-r="v" value="${esc(val)}" ${ph}/>`;
+  else if (f.t === 'area') h = `<textarea rows="3" data-r="v" ${ph}>${esc(val)}</textarea>`;
+  else if (f.t === 'lineas') h = `<textarea rows="3" data-r="v" ${ph}>${esc(val.split('|').map(x => x.trim()).join('\n'))}</textarea><small>Un renglón por línea.</small>`;
+  else if (f.t === 'dest') {
+    const m = val.match(/^([\s\S]*?)(?:<br\s*\/?>)?\s*<span class="accent-text[^"]*">([\s\S]*?)<\/span>\s*$/);
+    const a = m ? m[1] : val, b = m ? m[2] : '';
+    h = `<div class="grid2"><label>Parte normal<input data-r="a" value="${esc(dec(a.trim()))}"/></label><label>Parte destacada (más fina, en color)<input data-r="b" value="${esc(dec(b))}"/></label></div>`;
+  }
+  else if (f.t === 'val') {
+    const i = val.indexOf('|');
+    const ic = i >= 0 ? val.slice(0, i).trim() : '', tx = i >= 0 ? val.slice(i + 1).trim() : val;
+    h = `<div class="grid2"><label>Texto<input data-r="tx" value="${esc(tx)}"/></label><label>Ícono (ej: grass, handshake, verified_user)<input data-r="ic" value="${esc(ic)}"/></label></div>`;
+  }
+  else if (f.t === 'color') h = `<input type="color" data-r="v" value="${esc(val || COLORES_DEF[f.k.replace('color_', '')])}" style="height:42px;padding:2px"/>`;
+  else if (f.t === 'img') h = `<input type="hidden" data-r="img" value="${esc(img)}"/><input type="file" accept="image/*" data-up="1"/><img src="${esc(img)}" style="max-width:200px;display:${img ? 'block' : 'none'};margin-top:6px;border-radius:6px"/><button type="button" class="sec" data-quitar="1" style="margin-top:6px">Quitar foto</button>`;
+  return `<div class="campo" data-k="${f.k}" data-t="${f.t}" data-sep="${esc(f.sep || '')}"><label>${f.l}</label>${h}</div>`;
+}
+
+function leerCampo(el) {
+  const t = el.dataset.t;
+  const g = s => { const x = el.querySelector(`[data-r=${s}]`); return x ? x.value.trim() : ''; };
+  if (t === 'img') return { value: '', image_url: g('img') || null, vacio: !g('img') };
+  if (t === 'dest') {
+    const a = esc(g('a')), b = esc(g('b'));
+    return { value: b ? `${a}${el.dataset.sep}<span class="accent-text">${b}</span>` : a, image_url: null, vacio: !a && !b };
+  }
+  if (t === 'val') { const ic = g('ic') || 'check_circle', tx = g('tx'); return { value: tx ? `${ic}|${tx}` : '', image_url: null, vacio: !tx }; }
+  if (t === 'lineas') { const v = el.querySelector('[data-r=v]').value.split('\n').map(x => x.trim()).filter(Boolean).join('|'); return { value: v, image_url: null, vacio: !v }; }
+  const v = g('v');
+  return { value: v, image_url: null, vacio: !v };
+}
+
+async function cargarCampos() {
+  const { data, error } = await sb.from('site_settings').select('*').eq('site_id', SITE);
+  CAMPOS_DB = {};
+  (data || []).forEach(r => CAMPOS_DB[r.key] = r);
+  Object.entries(CAMPOS).forEach(([tab, grupos]) => {
+    $('#f-' + tab).innerHTML = grupos.map(g => `<div class="card"><h3>${g.g}</h3>${g.c.map(f => campoHTML(f, CAMPOS_DB[f.k])).join('')}</div>`).join('')
+      + `<button type="button" data-guardar="${tab}">Guardar cambios</button>`;
+  });
+  if (error) $('#f-inicio-msg').textContent = error.message;
+}
+
+async function guardarCampos(tab) {
+  const msg = $('#f-' + tab + '-msg');
+  msg.textContent = 'Guardando...';
+  const up = [], del = [];
+  document.querySelectorAll(`#f-${tab} .campo`).forEach(el => {
+    const r = leerCampo(el);
+    if (r.vacio) { if (CAMPOS_DB[el.dataset.k]) del.push(el.dataset.k); }
+    else up.push({ site_id: SITE, key: el.dataset.k, value: r.value, image_url: r.image_url, updated_at: new Date().toISOString() });
+  });
+  if (up.length) {
+    const { error } = await sb.from('site_settings').upsert(up, { onConflict: 'site_id,key' });
+    if (error) { msg.textContent = 'Error: ' + error.message; return; }
+  }
+  if (del.length) {
+    const { error } = await sb.from('site_settings').delete().eq('site_id', SITE).in('key', del);
+    if (error) { msg.textContent = 'Error: ' + error.message; return; }
+  }
+  await cargarCampos();
+  cargarSettings();
+  msg.textContent = 'Guardado.';
+}
+
+function mostrarTab(t) {
+  document.querySelectorAll('#app [data-tab]').forEach(el => { el.style.display = el.dataset.tab === t ? '' : 'none'; });
+  document.querySelectorAll('#tabs button').forEach(b => b.classList.toggle('on', b.dataset.t === t));
+}
+
+function armarPanel() {
+  if ($('#tabs')) return;
+  const app = $('#app');
+  const top = app.querySelector('.top');
+  const h2g = [...app.children].find(el => el.tagName === 'H2' && el.textContent.startsWith('Galería'));
+
+  ['inicio', 'contacto', 'marca'].forEach(t => {
+    const c = document.createElement('div'); c.id = 'f-' + t; c.dataset.tab = t;
+    const m = document.createElement('div'); m.id = 'f-' + t + '-msg'; m.className = 'err'; m.dataset.tab = t;
+    if (t === 'inicio') { app.insertBefore(c, h2g); app.insertBefore(m, h2g); }
+    else { app.appendChild(c); app.appendChild(m); }
+
+    c.addEventListener('click', e => {
+      if (e.target.dataset.guardar) guardarCampos(t);
+      if (e.target.dataset.quitar) {
+        const el = e.target.closest('.campo');
+        el.querySelector('[data-r=img]').value = '';
+        const im = el.querySelector('img'); im.removeAttribute('src'); im.style.display = 'none';
+      }
+    });
+    c.addEventListener('change', async e => {
+      if (!e.target.dataset.up) return;
+      const f = e.target.files[0]; if (!f) return;
+      const el = e.target.closest('.campo');
+      m.textContent = 'Subiendo foto...';
+      try {
+        const url = await subirFoto(f);
+        el.querySelector('[data-r=img]').value = url;
+        const im = el.querySelector('img'); im.src = url; im.style.display = 'block';
+        m.textContent = 'Foto subida. Tocá "Guardar cambios" para aplicarla.';
+      } catch (err) { m.textContent = 'Error al subir: ' + err.message; }
+    });
+  });
+
+  let tab = null;
+  [...app.children].forEach(el => {
+    if (el === top || el.dataset.tab) return;
+    if (el.tagName === 'H2') {
+      const x = el.textContent;
+      tab = x.startsWith('Animales') ? 'animales' : x.startsWith('Lotes') ? 'lotes' : /^(Galería|Logos)/.test(x) ? 'inicio' : 'avanzado';
+    }
+    if (tab) el.dataset.tab = tab;
+  });
+
+  const nav = document.createElement('div'); nav.id = 'tabs'; nav.className = 'tabs';
+  nav.innerHTML = TABS.map(([k, l]) => `<button type="button" data-t="${k}">${l}</button>`).join('');
+  nav.addEventListener('click', e => { if (e.target.dataset.t) mostrarTab(e.target.dataset.t); });
+  top.after(nav);
+  mostrarTab('inicio');
+}
   
 $('#f-login').addEventListener('submit', async e => {
   e.preventDefault();
