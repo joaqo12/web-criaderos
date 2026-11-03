@@ -101,6 +101,19 @@
   </form>
 
   <div id="l-lista"></div>
+
+  <h2 style="margin-top:36px">Galería "Un día en el campo"</h2>
+  <p><small>La web muestra las primeras 4 fotos según el orden (la 1 es la grande).</small></p>
+  <button id="g-nuevo">+ Nueva foto</button>
+  <div id="g-msg" class="err"></div>
+  <div id="g-lista"></div>
+
+  <h2 style="margin-top:36px">Logos "Registros y respaldo"</h2>
+  <p><small>El texto se muestra cuando no hay logo. Se ven 4 por fila.</small></p>
+  <button id="p-nuevo">+ Nuevo logo</button>
+  <div id="p-msg" class="err"></div>
+  <div id="p-lista"></div>
+  
   <h2 style="margin-top:36px">Textos e imágenes del sitio</h2>
   <p><small>Los textos van en "Valor". Las fotos se suben con el botón y quedan en "Imagen". Los colores (color_...) van en "Valor", por ejemplo #1f3a2b.</small></p>
   <div id="s-msg" class="err"></div>
@@ -137,7 +150,7 @@ async function iniciar() {
   SITE = asign[0].site_id;
   $('#app-title').textContent = asign[0].sites ? asign[0].sites.name : SITE;
   $('#app-user').textContent = 'Sesión iniciada como ' + session.user.email;
-  $('#login').classList.add('hidden'); $('#app').classList.remove('hidden');   cargarAnimales(); cargarLotes(); cargarSettings();
+  $('#login').classList.add('hidden'); $('#app').classList.remove('hidden');   cargarAnimales(); cargarLotes(); cargarSettings(); GRUPOS.forEach(cargarGrupo);
 }
 
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -344,6 +357,71 @@ $('#s-add').onclick = async () => {
   cargarSettings();
 };
 
+
+const GRUPOS = [
+  { t: 'gallery', campo: 'label', lista: '#g-lista', msg: '#g-msg', nuevo: '#g-nuevo' },
+  { t: 'partners', campo: 'name', lista: '#p-lista', msg: '#p-msg', nuevo: '#p-nuevo' }
+];
+
+async function cargarGrupo(g) {
+  const { data, error } = await sb.from(g.t).select('*').eq('site_id', SITE).order('sort_order');
+  if (error) { $(g.msg).textContent = error.message; return; }
+  g.rows = data;
+  $(g.lista).innerHTML = data.length ? data.map(r => `
+    <div class="card">
+      <div class="grid2">
+        <label>Texto<input data-f="txt" value="${esc(r[g.campo])}"/></label>
+        <label>Orden<input data-f="ord" type="number" value="${esc(r.sort_order)}"/></label>
+      </div>
+      <label>Imagen (enlace o subir foto)<input data-f="img" value="${esc(r.image_url)}"/></label>
+      <input type="file" accept="image/*" data-up="1"/>
+      <img src="${esc(r.image_url)}" style="max-width:160px;display:${r.image_url ? 'block' : 'none'};margin-top:6px;border-radius:6px"/>
+      <div class="acc" style="margin-top:10px"><button data-save="${r.id}">Guardar</button><button class="rojo" data-del="${r.id}">Borrar</button></div>
+    </div>`).join('') : '<p>No hay elementos todavía.</p>';
+}
+
+GRUPOS.forEach(g => {
+  $(g.lista).addEventListener('change', async e => {
+    if (!e.target.dataset.up) return;
+    const f = e.target.files[0]; if (!f) return;
+    const card = e.target.closest('.card');
+    $(g.msg).textContent = 'Subiendo foto...';
+    try {
+      const url = await subirFoto(f);
+      card.querySelector('[data-f=img]').value = url;
+      const im = card.querySelector('img'); im.src = url; im.style.display = 'block';
+      $(g.msg).textContent = 'Foto subida. Tocá Guardar para aplicarla.';
+    } catch (err) { $(g.msg).textContent = 'Error al subir: ' + err.message; }
+  });
+
+  $(g.lista).addEventListener('click', async e => {
+    const sv = e.target.dataset.save, del = e.target.dataset.del;
+    if (sv) {
+      const card = e.target.closest('.card');
+      const row = {
+        [g.campo]: card.querySelector('[data-f=txt]').value.trim(),
+        sort_order: parseInt(card.querySelector('[data-f=ord]').value) || 1,
+        image_url: card.querySelector('[data-f=img]').value.trim() || null
+      };
+      const { error } = await sb.from(g.t).update(row).eq('id', sv).eq('site_id', SITE);
+      if (error) { $(g.msg).textContent = 'Error: ' + error.message; return; }
+      $(g.msg).textContent = 'Guardado.';
+      cargarGrupo(g);
+    }
+    if (del && confirm('¿Borrar este elemento?')) {
+      const { error } = await sb.from(g.t).delete().eq('id', del).eq('site_id', SITE);
+      if (error) $(g.msg).textContent = error.message; else cargarGrupo(g);
+    }
+  });
+
+  $(g.nuevo).onclick = async () => {
+    const max = Math.max(0, ...(g.rows || []).map(r => r.sort_order || 0));
+    const { error } = await sb.from(g.t).insert({ site_id: SITE, [g.campo]: 'Nuevo', sort_order: max + 1 });
+    if (error) $(g.msg).textContent = 'Error: ' + error.message; else cargarGrupo(g);
+  };
+});
+
+  
   
 $('#f-login').addEventListener('submit', async e => {
   e.preventDefault();
