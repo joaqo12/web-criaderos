@@ -926,6 +926,13 @@ async function cargarDatosDesdeSupabase() {
   BRAND.sub = cfg.site_subtitle || cfg.sub || BRAND.sub;
 
 
+  if (cfg.wa) BRAND.wa = cfg.wa.replace(/\D/g, '');
+  if (cfg.tel) { BRAND.tel = cfg.tel; BRAND.telHref = 'tel:' + cfg.tel.replace(/[^\d+]/g, ''); }
+  if (cfg.email) BRAND.email = cfg.email;
+  if (cfg.horario) BRAND.horario = cfg.horario;
+  if (cfg.direccion) BRAND.dir = cfg.direccion.split('|').map(x => x.trim());
+  
+
   ['dark', 'main', 'mid', 'light', 'band1', 'band2', 'cta'].forEach(k => {
     if (cfg['color_' + k]) document.documentElement.style.setProperty('--c-' + k, cfg['color_' + k]);
   });
