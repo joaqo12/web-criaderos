@@ -15,6 +15,15 @@
   .err { color: #a33; font-size: 13px; margin-top: 12px; min-height: 16px; }
   .hidden { display: none; }
 
+  #vista { position: fixed; top: 0; right: 0; width: 45vw; height: 100vh; background: #fff; border-left: 1px solid #dcd5c3; display: none; flex-direction: column; z-index: 10; }
+  #vista iframe { flex: 1; border: 0; width: 100%; }
+  #vista .barra { display: flex; align-items: center; gap: 8px; padding: 8px; background: #fbf9f3; border-bottom: 1px solid #dcd5c3; }
+  body.vista #vista { display: flex; }
+  body.vista .wrap { margin: 24px 46vw 24px 16px; max-width: none; }
+  @media (max-width: 900px) { #vista { display: none !important; } body.vista .wrap { margin: 24px auto; } }
+
+
+  
   .wrap { max-width: 960px; margin: 24px auto; padding: 0 16px; }
   .top { display: flex; justify-content: space-between; align-items: center; }
   .card { background: #fbf9f3; border: 1px solid #dcd5c3; border-radius: 12px; padding: 20px; margin: 16px 0; }
@@ -47,8 +56,8 @@
 
 <div id="app" class="wrap hidden">
   <div class="top">
-    <div><h1 id="app-title"></h1><small id="app-user"></small></div>
-    <button id="salir">Cerrar sesión</button>
+    <div><h1 id="app-title"></h1><small id="app-user"></small><br><a id="app-link" target="_blank" rel="noopener"></a></div>
+    <div class="acc"><button id="btn-vista" class="sec">Ver vista previa</button><button id="salir">Cerrar sesión</button></div>
   </div>
   <h2>Animales</h2>
   <button id="a-nuevo">+ Nuevo animal</button>
@@ -129,6 +138,11 @@
   
 </div>
 
+<div id="vista">
+  <div class="barra"><button class="sec" id="vista-refresh" type="button">Actualizar</button><span style="flex:1"></span><small>Así se ve tu web</small></div>
+  <iframe id="vista-frame"></iframe>
+</div>
+  
 <script>
 const SUPABASE_URL = 'https://wavxivsalphthkmekzla.supabase.co';
 const SUPABASE_KEY = 'sb_publishable_Ugsbe8guq0pJFWiGiarZZQ__6JVV-Ix';
@@ -147,7 +161,7 @@ async function iniciar() {
     await sb.auth.signOut();
     return;
   }
-  SITE = asign[0].site_id;
+  SITE = asign[0].site_id;   $('#app-link').href = '/?c=' + SITE;   $('#app-link').textContent = location.origin + '/?c=' + SITE;
   $('#app-title').textContent = asign[0].sites ? asign[0].sites.name : SITE;
   $('#app-user').textContent = 'Sesión iniciada como ' + session.user.email;
   $('#login').classList.add('hidden'); $('#app').classList.remove('hidden');   cargarAnimales(); cargarLotes(); cargarSettings(); GRUPOS.forEach(cargarGrupo);
@@ -421,7 +435,20 @@ GRUPOS.forEach(g => {
   };
 });
 
-  
+  function refrescarVista() {
+  const f = $('#vista-frame');
+  try { f.contentWindow.location.reload(); } catch (e) { f.src = f.src; }
+}
+$('#btn-vista').onclick = () => {
+  document.body.classList.toggle('vista');
+  const f = $('#vista-frame');
+  if (document.body.classList.contains('vista') && !f.getAttribute('src')) f.src = '/?c=' + SITE;
+};
+$('#vista-refresh').onclick = refrescarVista;
+document.addEventListener('click', e => {
+  if (e.target.tagName === 'BUTTON' && /Guardar|Borrar|Agregar/.test(e.target.textContent))
+    setTimeout(() => { if (document.body.classList.contains('vista')) refrescarVista(); }, 1800);
+});
   
 $('#f-login').addEventListener('submit', async e => {
   e.preventDefault();
