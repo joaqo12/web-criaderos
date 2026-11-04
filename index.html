@@ -910,6 +910,7 @@ async function cargarDatosDesdeSupabase() {
       ANIMALES.push({
         c: a.category,
         tag: a.tag,
+        id: a.id,         
         n: a.name,
         raza: a.breed,
         rp: a.rp,
@@ -1191,6 +1192,166 @@ async function cargarDatosDesdeSupabase() {
     if (h) { e.preventDefault(); e.stopPropagation(); abrir(h); }
   }, true);
 
+
+
+  /* ===== ETAPA 3: animales y lotes ===== */
+  const CATS = ['toros', 'vientres', 'vaquillonas', 'terneros'];
+  const ESTADOS = ['Disponible', 'Reservado', 'Plantel'];
+  const sel = (id, arr, v) => `<select id="${id}">${arr.map(o => `<option${o === v ? ' selected' : ''}>${o}</option>`).join('')}</select>`;
+  const recargar = () => { sessionStorage.setItem('edY', String(window.scrollY)); location.reload(); };
+
+  const st2 = document.createElement('style');
+  st2.textContent = `#ed-pop select{width:100%;box-sizing:border-box;margin-top:5px;padding:9px 11px;border:1px solid #d3ccb8;border-radius:8px;font:14px system-ui;background:#fff}
+  #ed-pop .g2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+  #ed-pop .at{display:flex;gap:6px;margin-top:6px}
+  #ed-pop .at button{padding:6px 10px}
+  #ed-pop .fo{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:6px}
+  #ed-pop .fo img{width:100%;aspect-ratio:4/3;object-fit:cover;border-radius:6px;margin-top:6px;display:none}
+  #ed-pop .fo input[type=file]{font-size:11px}
+  .ed-hover2{outline:2px dashed #d9a441!important;outline-offset:3px;cursor:pointer!important}`;
+  document.head.appendChild(st2);
+
+  bar.insertAdjacentHTML('beforeend', '<button id="ed-na" type="button">+ Animal</button><button id="ed-nl" type="button">+ Lote</button>');
+
+  let AF = ['', '', ''];
+  async function abrirAnimal(id) {
+    let a = null;
+    if (id) { const r = await supabaseClient.from('animals').select('*').eq('id', id).limit(1); a = r.data && r.data[0]; }
+    AF = [a?.main_image_url || '', (a?.gallery_urls || [])[0] || '', (a?.gallery_urls || [])[1] || ''];
+    cerrar();
+    const p = document.createElement('div'); p.id = 'ed-pop';
+    p.innerHTML = `<div class="in" style="max-width:560px"><h3>${a ? 'Editar animal' : 'Nuevo animal'}</h3>
+      <div class="g2">
+        <label>Nombre<input id="an-name" value="${E(a?.name || '')}"/></label>
+        <label>Categoría${sel('an-cat', CATS, a?.category)}</label>
+        <label>Etiqueta (ej: Toro)<input id="an-tag" value="${E(a?.tag || '')}"/></label>
+        <label>Raza<input id="an-breed" value="${E(a?.breed || '')}"/></label>
+        <label>RP o lote<input id="an-rp" value="${E(a?.rp || '')}"/></label>
+        <label>Estado${sel('an-status', ESTADOS, a?.status)}</label>
+        <label>Precio (texto, ej: Consultar)<input id="an-price" value="${E(a?.price || '')}"/></label>
+        <label>Etiquetas (separadas por coma)<input id="an-tags" value="${E((a?.tags || []).join(', '))}"/></label>
+      </div>
+      <label>Observaciones<textarea id="an-obs" rows="3">${E(a?.observations || '')}</textarea></label>
+      <label>Datos de la ficha</label><div id="an-attrs"></div>
+      <button type="button" id="an-addattr" style="margin-top:8px">+ Agregar dato</button>
+      <label>Fotos (principal, 2 y 3)</label>
+      <div class="fo">${[0, 1, 2].map(i => `<div><input type="file" accept="image/*" data-af="${i}"/><img id="an-img-${i}"/><button type="button" data-aq="${i}" style="margin-top:6px;padding:4px 8px;font-size:12px">Quitar</button></div>`).join('')}</div>
+      <div class="msg" id="ed-msg"></div>
+      <div class="row"><button class="p" id="an-ok" type="button">Guardar</button><button id="ed-no" type="button">Cancelar</button>${a ? '<button id="an-del" type="button" style="color:#a33;border-color:#a33">Borrar</button>' : ''}</div></div>`;
+    document.body.appendChild(p);
+
+    const attrRow = (k, v) => {
+      const d = document.createElement('div'); d.className = 'at';
+      d.innerHTML = `<input placeholder="Dato (ej: Edad)" value="${E(k)}"/><input placeholder="Valor (ej: 3 años)" value="${E(v)}"/><button type="button">✕</button>`;
+      d.querySelector('button').onclick = () => d.remove();
+      byId('an-attrs').appendChild(d);
+    };
+    Object.entries(a?.attributes || {}).forEach(([k, v]) => attrRow(k, v));
+    if (!a) attrRow('', '');
+    byId('an-addattr').onclick = () => attrRow('', '');
+
+    const pintar = () => AF.forEach((u, i) => { const im = byId('an-img-' + i); im.src = u || ''; im.style.display = u ? 'block' : 'none'; });
+    pintar();
+    p.querySelectorAll('[data-af]').forEach(inp => inp.onchange = async () => {
+      const f = inp.files[0]; if (!f) return;
+      byId('ed-msg').textContent = 'Subiendo foto...';
+      try { AF[+inp.dataset.af] = await subir(f); pintar(); byId('ed-msg').textContent = ''; }
+      catch (err) { byId('ed-msg').textContent = 'Error al subir: ' + err.message; }
+    });
+    p.querySelectorAll('[data-aq]').forEach(b => b.onclick = () => { AF[+b.dataset.aq] = ''; pintar(); });
+
+    byId('ed-no').onclick = cerrar;
+    byId('an-ok').onclick = async () => {
+      const msg = byId('ed-msg');
+      const attrs = {};
+      p.querySelectorAll('#an-attrs .at').forEach(r => { const [k, v] = r.querySelectorAll('input'); if (k.value.trim()) attrs[k.value.trim()] = v.value.trim(); });
+      const row = {
+        site_id: SITE, name: byId('an-name').value.trim(), category: byId('an-cat').value, tag: byId('an-tag').value.trim(),
+        breed: byId('an-breed').value.trim(), rp: byId('an-rp').value.trim(), status: byId('an-status').value,
+        price: byId('an-price').value.trim(), observations: byId('an-obs').value.trim(),
+        tags: byId('an-tags').value.split(',').map(x => x.trim()).filter(Boolean),
+        attributes: attrs, main_image_url: AF[0], gallery_urls: [AF[1], AF[2]]
+      };
+      if (!row.name) { msg.textContent = 'Poné un nombre.'; return; }
+      msg.textContent = 'Guardando...';
+      const { error } = id ? await supabaseClient.from('animals').update(row).eq('id', id).eq('site_id', SITE) : await supabaseClient.from('animals').insert(row);
+      if (error) { msg.textContent = 'Error: ' + error.message; return; }
+      recargar();
+    };
+    if (byId('an-del')) byId('an-del').onclick = async () => {
+      if (!confirm('¿Borrar este animal? No se puede deshacer.')) return;
+      const { error } = await supabaseClient.from('animals').delete().eq('id', id).eq('site_id', SITE);
+      if (error) byId('ed-msg').textContent = 'Error: ' + error.message; else recargar();
+    };
+  }
+
+  async function abrirLote(code) {
+    let l = null;
+    if (code) { const r = await supabaseClient.from('lots').select('*').eq('lot_code', code).limit(1); l = r.data && r.data[0]; }
+    cerrar();
+    const p = document.createElement('div'); p.id = 'ed-pop';
+    p.innerHTML = `<div class="in" style="max-width:520px"><h3>${l ? 'Editar lote' : 'Nuevo lote'}</h3>
+      <div class="g2">
+        <label>Código (ej: L-01)<input id="lo-code" value="${E(l?.lot_code || '')}"/></label>
+        <label>Categoría${sel('lo-cat', CATS, l?.category)}</label>
+        <label>Descripción<input id="lo-desc" value="${E(l?.description || '')}"/></label>
+        <label>Raza<input id="lo-breed" value="${E(l?.breed || '')}"/></label>
+        <label>Cantidad<input id="lo-qty" type="number" min="0" value="${E(l?.quantity ?? '')}"/></label>
+        <label>Peso promedio (ej: 360 kg)<input id="lo-weight" value="${E(l?.average_weight || '')}"/></label>
+        <label>Estado${sel('lo-status', ESTADOS, l?.status)}</label>
+      </div>
+      <div class="msg" id="ed-msg"></div>
+      <div class="row"><button class="p" id="lo-ok" type="button">Guardar</button><button id="ed-no" type="button">Cancelar</button>${l ? '<button id="lo-del" type="button" style="color:#a33;border-color:#a33">Borrar</button>' : ''}</div></div>`;
+    document.body.appendChild(p);
+    byId('ed-no').onclick = cerrar;
+    byId('lo-ok').onclick = async () => {
+      const msg = byId('ed-msg');
+      const row = {
+        site_id: SITE, lot_code: byId('lo-code').value.trim(), category: byId('lo-cat').value,
+        description: byId('lo-desc').value.trim(), breed: byId('lo-breed').value.trim(),
+        quantity: parseInt(byId('lo-qty').value) || 0, average_weight: byId('lo-weight').value.trim(), status: byId('lo-status').value
+      };
+      if (!row.lot_code) { msg.textContent = 'Poné un código.'; return; }
+      msg.textContent = 'Guardando...';
+      const { error } = l ? await supabaseClient.from('lots').update(row).eq('id', l.id).eq('site_id', SITE) : await supabaseClient.from('lots').insert(row);
+      if (error) { msg.textContent = 'Error: ' + error.message; return; }
+      recargar();
+    };
+    if (byId('lo-del')) byId('lo-del').onclick = async () => {
+      if (!confirm('¿Borrar este lote? No se puede deshacer.')) return;
+      const { error } = await supabaseClient.from('lots').delete().eq('id', l.id).eq('site_id', SITE);
+      if (error) byId('ed-msg').textContent = 'Error: ' + error.message; else recargar();
+    };
+  }
+
+  byId('ed-na').onclick = () => abrirAnimal(null);
+  byId('ed-nl').onclick = () => abrirLote(null);
+
+  let hov2 = null;
+  document.addEventListener('mouseover', e => {
+    if (hov2) hov2.classList.remove('ed-hover2');
+    hov2 = null;
+    if (e.target.closest('#ed-pop, #ed-bar')) return;
+    const c = e.target.closest('#animales-grid article') || e.target.closest('#lotes-body tr');
+    if (c && !(c.tagName === 'TR' && c.children.length < 2)) { hov2 = c; c.classList.add('ed-hover2'); }
+  });
+  document.addEventListener('click', e => {
+    if (e.target.closest('#ed-pop, #ed-bar')) return;
+    const art = e.target.closest('#animales-grid article');
+    if (art) {
+      e.preventDefault(); e.stopPropagation();
+      const b = art.querySelector('[data-ficha]');
+      const an = b ? ANIMALES[+b.dataset.ficha] : null;
+      if (an && an.id) abrirAnimal(an.id);
+      return;
+    }
+    const tr = e.target.closest('#lotes-body tr');
+    if (tr && tr.children.length > 1) {
+      e.preventDefault(); e.stopPropagation();
+      abrirLote(tr.children[0].textContent.trim());
+    }
+  }, true);
+  
   const y = sessionStorage.getItem('edY');
   if (y) { sessionStorage.removeItem('edY'); setTimeout(() => window.scrollTo(0, +y), 1500); }
 })();
