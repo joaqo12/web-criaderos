@@ -62,10 +62,20 @@
   </form>
 </div>
 
+
+<div id="editor" style="display:none;position:fixed;inset:0;z-index:50;background:#f4f0e6;flex-direction:column">
+  <div style="display:flex;align-items:center;gap:12px;padding:10px 16px;background:#1f3a2b;color:#f4f0e6">
+    <b>Editando tu web</b>
+    <span style="flex:1;font-size:13px;opacity:.85">Tocá cualquier texto o foto para cambiarlo.</span>
+    <button id="editor-cerrar" type="button" style="margin:0;background:#f4f0e6;color:#1f3a2b">Cerrar editor</button>
+  </div>
+  <iframe id="editor-frame" style="flex:1;border:0;width:100%"></iframe>
+</div>
+  
 <div id="app" class="wrap hidden">
   <div class="top">
     <div><h1 id="app-title"></h1><small id="app-user"></small><br><a id="app-link" target="_blank" rel="noopener"></a></div>
-    <div class="acc"><button id="btn-vista" class="sec">Ver vista previa</button><button id="salir">Cerrar sesión</button></div>
+    <div class="acc"><button id="btn-vista" class="sec">Ver vista previa</button><button id="btn-editor">Editar mi web</button><button id="salir">Cerrar sesión</button></div>
   </div>
   <h2>Animales</h2>
   <button id="a-nuevo">+ Nuevo animal</button>
@@ -645,6 +655,21 @@ function armarPanel() {
   top.after(nav);
   mostrarTab('inicio');
 }
+
+
+$('#btn-editor').onclick = () => {
+  $('#editor-frame').src = '/?c=' + SITE + '&editar=1';
+  $('#editor').style.display = 'flex';
+  document.body.style.overflow = 'hidden';
+};
+$('#editor-cerrar').onclick = () => {
+  $('#editor').style.display = 'none';
+  $('#editor-frame').src = 'about:blank';
+  document.body.style.overflow = '';
+  cargarSettings();
+  if (typeof cargarCampos === 'function') cargarCampos();
+};
+
   
 $('#f-login').addEventListener('submit', async e => {
   e.preventDefault();
