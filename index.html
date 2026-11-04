@@ -1059,12 +1059,12 @@ async function cargarDatosDesdeSupabase() {
   add('wa', 'Número de WhatsApp (solo números, con código de país. Ej: 5491112345678)', 'txt', cd(0), { init: () => BRAND.wa });
   add('tel', 'Teléfono (como se muestra en la web)', 'txt', cd(1), { init: () => BRAND.tel });
   add('email', 'Email', 'txt', cd(2), { init: () => BRAND.email });
-  add('direccion', 'Dirección', 'lineas', cd(3), { init: () => BRAND.dir.join('\n') });
+  add('direccion', 'Dirección', 'lineas', cd(3), { init: () => BRAND.dir.join(String.fromCharCode(10)) });
   add('wa', 'Número de WhatsApp (solo números, con código de país. Ej: 5491112345678)', 'txt', () => byId('nav-wa'), { init: () => BRAND.wa });
   add('horario', 'Horario de atención', 'txt', () => byId('horario-top'), { init: () => BRAND.horario });
   add('horario', 'Horario de atención', 'txt', () => byId('horario-card'), { init: () => BRAND.horario });
-  add('direccion', 'Dirección', 'lineas', () => byId('dir-texto'), { init: () => BRAND.dir.join('\n') });
-  add('direccion', 'Dirección', 'lineas', () => byId('footer-dir'), { init: () => BRAND.dir.join('\n') });
+  add('direccion', 'Dirección', 'lineas', () => byId('dir-texto'), { init: () => BRAND.dir.join(String.fromCharCode(10)) });
+  add('direccion', 'Dirección', 'lineas', () => byId('footer-dir'), { init: () => BRAND.dir.join(String.fromCharCode(10)) });
   add('mapa_img', 'Foto del mapa o del acceso', 'img', () => byId('mapa'));
 
 
@@ -1113,8 +1113,10 @@ async function cargarDatosDesdeSupabase() {
   async function guardar(h) {
     const msg = byId('ed-msg'), v = id => (byId(id) ? byId(id).value.trim() : '');
     let row;
-    if (h.t === 'txt' || h.t === 'area') row = { value: v('ed-a') };     else if (h.t === 'lineas') row = { value: byId('ed-a').value.split('
-').map(x => x.trim()).filter(Boolean).join('|') };
+
+    if (h.t === 'txt' || h.t === 'area') row = { value: v('ed-a') };
+    else if (h.t === 'lineas') row = { value: byId('ed-a').value.split(String.fromCharCode(10)).map(x => x.trim()).filter(Boolean).join('|') };
+    
     else if (h.t === 'dest') { const a = E(v('ed-a')), b = E(v('ed-b')); row = { value: b ? `${a}${h.sep}<span class="accent-text">${b}</span>` : a }; }
     else if (h.t === 'val') row = { value: v('ed-a') ? `${v('ed-i') || 'check_circle'}|${v('ed-a')}` : '' };
     else if (h.t === 'img') {
