@@ -145,6 +145,14 @@
   <p><small>Los textos van en "Valor". Las fotos se suben con el botón y quedan en "Imagen". Los colores (color_...) van en "Valor", por ejemplo #1f3a2b.</small></p>
   <div id="s-msg" class="err"></div>
   <div id="s-lista"></div>
+
+
+  <div class="card">
+    <b>Aviso en la web</b>
+    <label>Texto del aviso (ej: Remate el 15 de diciembre). Dejalo vacío para quitarlo.<input id="s-newval"/></label>
+    <button id="s-add">Publicar aviso</button>
+  </div>
+  
   <div class="card">
     <b>Agregar una llave nueva</b>
     <div class="grid2">
@@ -670,6 +678,16 @@ $('#editor-cerrar').onclick = () => {
   if (typeof cargarCampos === 'function') cargarCampos();
 };
 
+
+$('#s-add').onclick = async () => {
+  const v = $('#s-newval').value.trim();
+  const { error } = v
+    ? await sb.from('site_settings').upsert({ site_id: SITE, key: 'aviso', value: v, updated_at: new Date().toISOString() }, { onConflict: 'site_id,key' })
+    : await sb.from('site_settings').delete().eq('site_id', SITE).eq('key', 'aviso');
+  $('#s-msg').textContent = error ? 'Error: ' + error.message : (v ? 'Aviso publicado.' : 'Aviso quitado.');
+  cargarSettings();
+};
+  
   
 $('#f-login').addEventListener('submit', async e => {
   e.preventDefault();
