@@ -947,6 +947,14 @@ async function cargarDatosDesdeSupabase() {
     if (cfg['color_' + k]) document.documentElement.style.setProperty('--c-' + k, cfg['color_' + k]);
   });
 
+
+  let avBar = document.getElementById('aviso-bar');
+  if (cfg.aviso) {
+    if (!avBar) { avBar = document.createElement('div'); avBar.id = 'aviso-bar'; document.getElementById('hero').after(avBar); }
+    avBar.style.cssText = 'background:var(--c-cta);color:#f4f0e6;text-align:center;padding:14px 20px;font-weight:600;font-size:14px';
+    avBar.textContent = cfg.aviso;
+  } else if (avBar) avBar.remove();
+
   
   if (cfg.about_title) ABOUT.titulo = cfg.about_title;
   if (cfg.about_text) ABOUT.texto = cfg.about_text;
