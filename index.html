@@ -982,4 +982,165 @@ async function cargarDatosDesdeSupabase() {
 cargarDatosDesdeSupabase();
 </script>
 
+
+
+<script>
+/* MODO EDICIÓN: solo se activa dentro del panel (admin.html), con sesión y siendo dueño de este sitio */
+(async () => {
+  if (new URLSearchParams(location.search).get('editar') !== '1' || window.parent === window) return;
+  const { data: { session } } = await supabaseClient.auth.getSession();
+  if (!session) return;
+  const { data: mem } = await supabaseClient.from('site_users').select('site_id');
+  if (!mem || !mem.length) return;
+
+  const E = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+  const byId = id => document.getElementById(id);
+  const inicio = () => (location.hash.replace(/^#\/?/, '') || 'inicio') === 'inicio';
+  const secOf = sel => document.querySelector(sel).closest('section');
+
+  const ED = [];
+  const add = (k, l, t, el, x = {}) => ED.push({ k, l, t, el, ...x });
+  add('hero_badge', 'Etiqueta sobre el título', 'txt', () => inicio() && byId('hero-badge'));
+  add('hero_title', 'Título principal', 'dest', () => inicio() && byId('hero-title'), { sep: '<br/>' });
+  add('hero_sub', 'Texto debajo del título', 'area', () => inicio() && byId('hero-sub'));
+  add('hero_img', 'Foto de portada', 'img', () => inicio() && byId('hero'), { noLinks: true });
+  add('site_title', 'Nombre de la cabaña', 'txt', () => document.querySelector('#topbar .brand-name'));
+  add('site_subtitle', 'Frase debajo del nombre', 'txt', () => document.querySelector('#topbar .brand-sub'));
+  add('cria_title', 'Título de "Qué criamos"', 'dest', () => inicio() && secOf('#home-bento').querySelector('h2'), { sep: '<br/>' });
+  add('cria_text', 'Texto de "Qué criamos"', 'area', () => inicio() && secOf('#home-bento').querySelector('p'));
+  [['toros', 0], ['vientres', 1], ['terneros', 2]].forEach(([k, i]) => {
+    const card = () => inicio() && byId('home-bento').children[i];
+    add(`card_${k}_title`, 'Título de la tarjeta', 'txt', () => card() && card().querySelector('h3'));
+    add(`card_${k}_text`, 'Texto de la tarjeta', 'area', () => card() && card().querySelector('p'));
+    add(`card_${k}_img`, 'Foto de la tarjeta', 'img', card);
+  });
+  add('about_title', 'Título de "Sobre nosotros"', 'txt', () => byId('about-title'));
+  add('about_text', 'Texto de "Sobre nosotros"', 'area', () => byId('about-text'));
+  [1, 2, 3].forEach(n => add(`about_value_${n}`, `Punto destacado ${n}`, 'val', () => byId('about-values').children[n - 1]));
+  add('about_second', 'Foto chica de "Sobre nosotros"', 'img', () => byId('about-second'));
+  add('about_main', 'Foto grande de "Sobre nosotros"', 'img', () => byId('about-main'));
+  add('gallery_title', 'Título de la galería', 'dest', () => secOf('#home-gallery').querySelector('h2'), { sep: ' ' });
+
+  const hit = t => ED.find(e => {
+    let el = null; try { el = e.el(); } catch (x) {}
+    return el && el.contains(t) && !(e.noLinks && t.closest('a,button'));
+  });
+
+  const st = document.createElement('style');
+  st.textContent = `.ed-hover{outline:2px dashed #d9a441!important;outline-offset:3px;cursor:pointer!important}
+  #ed-bar{position:fixed;bottom:14px;left:50%;transform:translateX(-50%);z-index:9998;background:#1f3a2b;color:#fff;padding:10px 16px;border-radius:999px;font:600 13px system-ui;display:flex;gap:12px;align-items:center;box-shadow:0 8px 24px rgba(0,0,0,.35)}
+  #ed-bar button{background:#d9a441;color:#1d2a22;border:0;border-radius:999px;padding:6px 12px;font-weight:700;cursor:pointer}
+  #ed-pop{position:fixed;inset:0;z-index:9999;background:rgba(16,35,26,.55);display:flex;align-items:center;justify-content:center;padding:16px}
+  #ed-pop .in{background:#fbf9f3;color:#1d2a22;border-radius:12px;padding:20px;width:100%;max-width:440px;font:14px system-ui;max-height:90vh;overflow:auto}
+  #ed-pop h3{margin:0 0 12px;font-size:16px}
+  #ed-pop label{display:block;font-size:12px;font-weight:700;margin-top:10px}
+  #ed-pop input,#ed-pop textarea{width:100%;box-sizing:border-box;margin-top:5px;padding:9px 11px;border:1px solid #d3ccb8;border-radius:8px;font:14px system-ui}
+  #ed-pop .row{display:flex;gap:8px;margin-top:16px;flex-wrap:wrap}
+  #ed-pop button{padding:9px 14px;border-radius:8px;border:1px solid #1f3a2b;background:#fff;color:#1f3a2b;font-weight:700;cursor:pointer}
+  #ed-pop button.p{background:#1f3a2b;color:#fff}
+  #ed-pop .msg{color:#a33;font-size:13px;min-height:16px;margin-top:8px}`;
+  document.head.appendChild(st);
+
+  const bar = document.createElement('div'); bar.id = 'ed-bar';
+  bar.innerHTML = '<span>Modo edición: tocá cualquier texto o foto</span><button id="ed-col" type="button">Colores</button>';
+  document.body.appendChild(bar);
+
+  const cerrar = () => { const p = byId('ed-pop'); if (p) p.remove(); };
+
+  async function subir(file) {
+    const ext = (file.name.split('.').pop() || 'jpg').toLowerCase();
+    const path = `${SITE}/${Date.now()}-${Math.random().toString(36).slice(2, 7)}.${ext}`;
+    const { error } = await supabaseClient.storage.from('animales').upload(path, file, { cacheControl: '3600' });
+    if (error) throw error;
+    return supabaseClient.storage.from('animales').getPublicUrl(path).data.publicUrl;
+  }
+
+  async function restaurar(keys) {
+    const { error } = await supabaseClient.from('site_settings').delete().eq('site_id', SITE).in('key', keys);
+    if (error) { const m = byId('ed-msg'); if (m) m.textContent = 'Error: ' + error.message; return; }
+    sessionStorage.setItem('edY', String(window.scrollY));
+    location.reload();
+  }
+
+  async function guardar(h) {
+    const msg = byId('ed-msg'), v = id => (byId(id) ? byId(id).value.trim() : '');
+    let row;
+    if (h.t === 'txt' || h.t === 'area') row = { value: v('ed-a') };
+    else if (h.t === 'dest') { const a = E(v('ed-a')), b = E(v('ed-b')); row = { value: b ? `${a}${h.sep}<span class="accent-text">${b}</span>` : a }; }
+    else if (h.t === 'val') row = { value: v('ed-a') ? `${v('ed-i') || 'check_circle'}|${v('ed-a')}` : '' };
+    else if (h.t === 'img') {
+      const f = byId('ed-f').files[0];
+      if (!f) { msg.textContent = 'Elegí una foto.'; return; }
+      msg.textContent = 'Subiendo foto...';
+      try { row = { value: '', image_url: await subir(f) }; } catch (e) { msg.textContent = 'Error al subir: ' + e.message; return; }
+    }
+    if (!row.value && !row.image_url) return restaurar([h.k]);
+    msg.textContent = 'Guardando...';
+    const { error } = await supabaseClient.from('site_settings').upsert(
+      { site_id: SITE, key: h.k, value: row.value, image_url: row.image_url || null, updated_at: new Date().toISOString() },
+      { onConflict: 'site_id,key' });
+    if (error) { msg.textContent = 'Error: ' + error.message; return; }
+    cerrar();
+    await cargarDatosDesdeSupabase();
+  }
+
+  function abrir(h) {
+    const el = h.el();
+    let campos = '';
+    if (h.t === 'txt') campos = `<label>Texto<input id="ed-a" value="${E(el.textContent.trim())}"/></label>`;
+    else if (h.t === 'area') campos = `<label>Texto<textarea id="ed-a" rows="4">${E(el.textContent.trim())}</textarea></label>`;
+    else if (h.t === 'dest') {
+      const sp = el.querySelector('.accent-text');
+      const c = el.cloneNode(true); const s2 = c.querySelector('.accent-text'); if (s2) s2.remove();
+      c.querySelectorAll('br').forEach(x => x.replaceWith(' '));
+      campos = `<label>Parte normal<input id="ed-a" value="${E(c.textContent.trim())}"/></label><label>Parte destacada (más fina, en color)<input id="ed-b" value="${E(sp ? sp.textContent.trim() : '')}"/></label>`;
+    } else if (h.t === 'val') {
+      const ic = el.querySelector('.material-symbols-outlined');
+      const tx = [...el.childNodes].filter(n => n.nodeType === 3).map(n => n.textContent).join('').trim();
+      campos = `<label>Texto<input id="ed-a" value="${E(tx)}"/></label><label>Ícono (ej: grass, handshake, verified_user)<input id="ed-i" value="${E(ic ? ic.textContent.trim() : '')}"/></label>`;
+    } else if (h.t === 'img') campos = `<label>Elegí una foto desde tu compu<input id="ed-f" type="file" accept="image/*"/></label>`;
+    const p = document.createElement('div'); p.id = 'ed-pop';
+    p.innerHTML = `<div class="in"><h3>${E(h.l)}</h3>${campos}<div class="msg" id="ed-msg"></div><div class="row"><button class="p" id="ed-ok" type="button">Guardar</button><button id="ed-no" type="button">Cancelar</button><button id="ed-rs" type="button">Volver al original</button></div></div>`;
+    document.body.appendChild(p);
+    byId('ed-no').onclick = cerrar;
+    byId('ed-ok').onclick = () => guardar(h);
+    byId('ed-rs').onclick = () => restaurar([h.k]);
+  }
+
+  const COLS = [['main', 'Color principal'], ['mid', 'Color secundario'], ['light', 'Color claro (botones)'], ['dark', 'Fondo oscuro (portada y pie)'], ['band1', 'Banda de color, arriba'], ['band2', 'Banda de color, abajo'], ['cta', 'Banner de consulta']];
+  byId('ed-col').onclick = () => {
+    const cs = getComputedStyle(document.documentElement);
+    const p = document.createElement('div'); p.id = 'ed-pop';
+    p.innerHTML = `<div class="in"><h3>Colores de la web</h3>${COLS.map(([k, l]) => `<label>${l}<input type="color" id="ed-c-${k}" value="${cs.getPropertyValue('--c-' + k).trim()}" style="height:40px;padding:2px"/></label>`).join('')}<div class="msg" id="ed-msg"></div><div class="row"><button class="p" id="ed-ok" type="button">Guardar</button><button id="ed-no" type="button">Cancelar</button><button id="ed-rs" type="button">Volver a los originales</button></div></div>`;
+    document.body.appendChild(p);
+    byId('ed-no').onclick = cerrar;
+    byId('ed-rs').onclick = () => restaurar(COLS.map(([k]) => 'color_' + k));
+    byId('ed-ok').onclick = async () => {
+      const rows = COLS.map(([k]) => ({ site_id: SITE, key: 'color_' + k, value: byId('ed-c-' + k).value, image_url: null, updated_at: new Date().toISOString() }));
+      const { error } = await supabaseClient.from('site_settings').upsert(rows, { onConflict: 'site_id,key' });
+      if (error) { byId('ed-msg').textContent = 'Error: ' + error.message; return; }
+      rows.forEach(r => document.documentElement.style.setProperty('--c-' + r.key.replace('color_', ''), r.value));
+      cerrar();
+    };
+  };
+
+  let hov = null;
+  document.addEventListener('mouseover', e => {
+    if (hov) hov.classList.remove('ed-hover');
+    hov = null;
+    if (e.target.closest('#ed-pop, #ed-bar')) return;
+    const h = hit(e.target);
+    if (h) { hov = h.el(); hov.classList.add('ed-hover'); }
+  });
+  document.addEventListener('click', e => {
+    if (e.target.closest('#ed-pop, #ed-bar')) return;
+    const h = hit(e.target);
+    if (h) { e.preventDefault(); e.stopPropagation(); abrir(h); }
+  }, true);
+
+  const y = sessionStorage.getItem('edY');
+  if (y) { sessionStorage.removeItem('edY'); setTimeout(() => window.scrollTo(0, +y), 1500); }
+})();
+</script>
+  
 </body></html>
