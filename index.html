@@ -1022,7 +1022,7 @@ async function cargarDatosDesdeSupabase() {
   const { data: gal, error: galErr } = await supabaseClient.from('gallery').select('*').order('sort_order');
   console.log('settings:', cfg, 'gallery:', gal, 'error:', galErr);
   if (gal && gal.length) gal.forEach((g, i) => {
-    if (GALERIA[i]) { GALERIA[i].src = g.image_url || ''; if (g.label) GALERIA[i].l = g.label; }
+    if (GALERIA[i]) { GALERIA[i].src = g.image_url || ''; GALERIA[i].id = g.id; GALERIA[i].o = g.sort_order; if (g.label) GALERIA[i].l = g.label; }
   });
     renderStatic();
   renderAnimales();
@@ -1525,6 +1525,74 @@ async function cargarDatosDesdeSupabase() {
     const d = e.target.closest('#home-logos > div');
     if (d) { e.preventDefault(); e.stopPropagation(); abrirLogo([...byId('home-logos').children].indexOf(d)); }
   }, true);
+
+
+  /* ===== GALERÍA ===== */
+  const st5 = document.createElement('style');
+  st5.textContent = `.ed-hover5{outline:2px dashed #d9a441!important;outline-offset:3px;cursor:pointer!important}`;
+  document.head.appendChild(st5);
+  bar.insertAdjacentHTML('beforeend', '<button id="ed-ng" type="button">+ Foto galería</button>');
+
+  let GF = '';
+  function abrirGal(i) {
+    let g = i >= 0 ? GALERIA[i] : null;
+    if (g && !g.id) g = null;
+    if (!g && GALERIA.filter(x => x.id).length >= 4) { alert('La galería muestra 4 fotos. Editá o borrá una existente.'); return; }
+    GF = g ? (g.src || '') : '';
+    const maxO = Math.max(0, ...GALERIA.map(x => x.o || 0));
+    cerrar();
+    const p = document.createElement('div'); p.id = 'ed-pop';
+    p.innerHTML = `<div class="in"><h3>${g ? 'Editar foto de la galería' : 'Nueva foto de la galería'}</h3>
+      <label>Texto sobre la foto (opcional)<input id="ga-l" value="${E(g ? g.l : '')}"/></label>
+      <label>Orden (la 1 es la foto grande)<input id="ga-o" type="number" value="${E(g ? (g.o || 1) : maxO + 1)}"/></label>
+      <label>Foto<input id="ga-f" type="file" accept="image/*"/></label>
+      <img id="ga-img" style="max-width:220px;display:none;margin-top:8px;border-radius:6px"/>
+      <button type="button" id="ga-q" style="margin-top:8px;padding:4px 8px;font-size:12px">Quitar foto</button>
+      <div class="msg" id="ed-msg"></div>
+      <div class="row"><button class="p" id="ga-ok" type="button">Guardar</button><button id="ed-no" type="button">Cancelar</button>${g ? '<button id="ga-del" type="button" style="color:#a33;border-color:#a33">Borrar</button>' : ''}</div></div>`;
+    document.body.appendChild(p);
+    const pintar = () => { const im = byId('ga-img'); im.src = GF || ''; im.style.display = GF ? 'block' : 'none'; };
+    pintar();
+    byId('ga-f').onchange = async () => {
+      const f = byId('ga-f').files[0]; if (!f) return;
+      byId('ed-msg').textContent = 'Subiendo foto...';
+      try { GF = await subir(f); pintar(); byId('ed-msg').textContent = ''; }
+      catch (err) { byId('ed-msg').textContent = 'Error al subir: ' + err.message; }
+    };
+    byId('ga-q').onclick = () => { GF = ''; pintar(); };
+    byId('ed-no').onclick = cerrar;
+    byId('ga-ok').onclick = async () => {
+      const row = { label: byId('ga-l').value.trim(), image_url: GF || null, sort_order: parseInt(byId('ga-o').value) || 1 };
+      byId('ed-msg').textContent = 'Guardando...';
+      const { error } = g
+        ? await supabaseClient.from('gallery').update(row).eq('id', g.id).eq('site_id', SITE)
+        : await supabaseClient.from('gallery').insert({ ...row, site_id: SITE });
+      if (error) { byId('ed-msg').textContent = 'Error: ' + error.message; return; }
+      recargar();
+    };
+    if (byId('ga-del')) byId('ga-del').onclick = async () => {
+      if (!confirm('¿Borrar esta foto?')) return;
+      const { error } = await supabaseClient.from('gallery').delete().eq('id', g.id).eq('site_id', SITE);
+      if (error) byId('ed-msg').textContent = 'Error: ' + error.message; else recargar();
+    };
+  }
+
+  byId('ed-ng').onclick = () => abrirGal(-1);
+
+  let hov5 = null;
+  document.addEventListener('mouseover', e => {
+    if (hov5) hov5.classList.remove('ed-hover5');
+    hov5 = null;
+    if (e.target.closest('#ed-pop, #ed-bar')) return;
+    const f = e.target.closest('#home-gallery figure');
+    if (f) { hov5 = f; f.classList.add('ed-hover5'); }
+  });
+  document.addEventListener('click', e => {
+    if (e.target.closest('#ed-pop, #ed-bar')) return;
+    const f = e.target.closest('#home-gallery figure');
+    if (f) { e.preventDefault(); e.stopPropagation(); abrirGal([...byId('home-gallery').children].indexOf(f)); }
+  }, true);
+
   
   const y = sessionStorage.getItem('edY');
   if (y) { sessionStorage.removeItem('edY'); setTimeout(() => window.scrollTo(0, +y), 1500); }
