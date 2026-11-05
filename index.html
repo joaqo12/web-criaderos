@@ -694,7 +694,7 @@ function renderStatic() {
   $('#contacto-dif').innerHTML = CONTACTO_DIF.map(c => `<div class="panel p-7 space-y-3.5">${ICONBOX(c.i)}<h3 class="ink font-sans text-xl font-bold">${c.t}</h3><p class="muted text-[13.5px] leading-relaxed">${c.d}</p></div>`).join('');
 
   // Footer
-  $('#footer-blurb').textContent = 'Cría de hacienda a campo, con registro al día y trato directo del productor.';
+  $('#footer-blurb').textContent = BRAND.blurb || 'Cría de hacienda a campo, con registro al día y trato directo del productor.';
   $('#footer-nav').innerHTML = Object.entries(PAGES).map(([k, p]) => `<li><a class="hover:text-white transition-colors" href="#/${k}">${p.nav}</a></li>`).join('');
   $('#footer-dir').innerHTML = BRAND.dir.join('<br/>');
   $('#footer-contacto').innerHTML = `${BRAND.tel}<br/>${BRAND.email}<br/>${BRAND.horario}`;
@@ -979,6 +979,16 @@ async function cargarDatosDesdeSupabase() {
     avBar.textContent = cfg.aviso;
   } else if (avBar) avBar.remove();
 
+
+  [1, 2, 3, 4].forEach(n => { if (cfg['paso_' + n]) { const [t, ...d] = cfg['paso_' + n].split('|'); PASOS[n - 1] = [t.trim(), d.join('|').trim()]; } });
+  [1, 2, 3].forEach(n => { if (cfg['cond_' + n]) { const [i, t, ...d] = cfg['cond_' + n].split('|'); CONDICIONES[n - 1] = { i: i.trim(), t: t.trim(), d: d.join('|').trim() }; } });
+  [1, 2, 3].forEach(n => { if (cfg['dif_' + n]) { const [i, t, ...d] = cfg['dif_' + n].split('|'); CONTACTO_DIF[n - 1] = { i: i.trim(), t: t.trim(), d: d.join('|').trim() }; } });
+  ['venta', 'visita'].forEach(n => { if (cfg['cta_' + n]) { const [k, t, ...d] = cfg['cta_' + n].split('|'); CTAS[n] = { k: k.trim(), t: t.trim(), d: d.join('|').trim() }; } });
+  const fq = [];
+  for (let n = 1; n <= 12; n++) if (cfg['faq_' + n]) { const [q, ...a] = cfg['faq_' + n].split('|'); fq.push([q.trim(), a.join('|').trim()]); }
+  if (fq.length) { FAQ.length = 0; fq.forEach(x => FAQ.push(x)); }
+  if (cfg.footer_blurb) BRAND.blurb = cfg.footer_blurb;
+  if (cfg.partners_title) document.querySelector('#home-logos').parentElement.querySelector('p').textContent = cfg.partners_title;
   
   if (cfg.about_title) ABOUT.titulo = cfg.about_title;
   if (cfg.about_text) ABOUT.texto = cfg.about_text;
@@ -1351,7 +1361,101 @@ async function cargarDatosDesdeSupabase() {
       abrirLote(tr.children[0].textContent.trim());
     }
   }, true);
-  
+    /* ===== ETAPA 4: textos fijos ===== */
+  const st3 = document.createElement('style');
+  st3.textContent = `.ed-hover3{outline:2px dashed #d9a441!important;outline-offset:3px;cursor:pointer!important}`;
+  document.head.appendChild(st3);
+
+  const MU = [];
+  const mu = (k, titulo, el, labels, get, pack) => MU.push({ k, titulo, el, labels, get, pack });
+  const L3 = ['Ícono (ej: handshake, payments, local_shipping)', 'Título', 'Descripción'];
+  [0, 1, 2, 3].forEach(i => mu('paso_' + (i + 1), 'Paso ' + (i + 1), () => byId('pasos').children[i], ['Título', 'Descripción'], () => PASOS[i], v => v.join('|')));
+  [0, 1, 2].forEach(i => mu('cond_' + (i + 1), 'Condición de venta ' + (i + 1), () => byId('condiciones').children[i], L3, () => { const c = CONDICIONES[i]; return [c.i, c.t, c.d]; }, v => v.join('|')));
+  [0, 1, 2].forEach(i => mu('dif_' + (i + 1), 'Destacado ' + (i + 1), () => byId('contacto-dif').children[i], L3, () => { const c = CONTACTO_DIF[i]; return [c.i, c.t, c.d]; }, v => v.join('|')));
+  ['venta', 'visita'].forEach(n => mu('cta_' + n, 'Banner de consulta', () => document.querySelector(`[data-cta=${n}] .cta-banner`), ['Texto chico de arriba', 'Título', 'Descripción'], () => [CTAS[n].k, CTAS[n].t, CTAS[n].d], v => v.join('|')));
+  mu('footer_blurb', 'Texto del pie de página', () => byId('footer-blurb'), ['Texto'], () => [byId('footer-blurb').textContent.trim()], v => v[0]);
+  mu('partners_title', 'Título de registros y respaldo', () => byId('home-logos').parentElement.querySelector('p'), ['Texto'], () => [byId('home-logos').parentElement.querySelector('p').textContent.trim()], v => v[0]);
+
+  const muHit = t => MU.find(m => { let el = null; try { el = m.el(); } catch (x) {} return el && el.contains(t); });
+
+  function abrirMulti(m) {
+    const vals = m.get();
+    cerrar();
+    const last = m.labels.length - 1;
+    const p = document.createElement('div'); p.id = 'ed-pop';
+    p.innerHTML = `<div class="in"><h3>${E(m.titulo)}</h3>${m.labels.map((l, j) => `<label>${E(l)}${j === last ? `<textarea id="mu-${j}" rows="3">${E(vals[j])}</textarea>` : `<input id="mu-${j}" value="${E(vals[j])}"/>`}</label>`).join('')}<div class="msg" id="ed-msg"></div><div class="row"><button class="p" id="mu-ok" type="button">Guardar</button><button id="ed-no" type="button">Cancelar</button><button id="mu-rs" type="button">Volver al original</button></div></div>`;
+    document.body.appendChild(p);
+    byId('ed-no').onclick = cerrar;
+    byId('mu-rs').onclick = () => restaurar([m.k]);
+    byId('mu-ok').onclick = async () => {
+      const v = m.labels.map((_, j) => byId('mu-' + j).value.trim());
+      if (!v.some(Boolean)) return restaurar([m.k]);
+      byId('ed-msg').textContent = 'Guardando...';
+      const { error } = await supabaseClient.from('site_settings').upsert({ site_id: SITE, key: m.k, value: m.pack(v), image_url: null, updated_at: new Date().toISOString() }, { onConflict: 'site_id,key' });
+      if (error) { byId('ed-msg').textContent = 'Error: ' + error.message; return; }
+      recargar();
+    };
+  }
+
+  async function guardarFaq(lista) {
+    const msg = byId('ed-msg');
+    if (!lista.length) { msg.textContent = 'Tiene que quedar al menos una pregunta.'; return; }
+    msg.textContent = 'Guardando...';
+    const now = new Date().toISOString();
+    const up = lista.map((x, i) => ({ site_id: SITE, key: 'faq_' + (i + 1), value: x[0] + '|' + x[1], image_url: null, updated_at: now }));
+    let r = await supabaseClient.from('site_settings').upsert(up, { onConflict: 'site_id,key' });
+    if (r.error) { msg.textContent = 'Error: ' + r.error.message; return; }
+    const extra = [];
+    for (let n = lista.length + 1; n <= 12; n++) extra.push('faq_' + n);
+    if (extra.length) {
+      r = await supabaseClient.from('site_settings').delete().eq('site_id', SITE).in('key', extra);
+      if (r.error) { msg.textContent = 'Error: ' + r.error.message; return; }
+    }
+    recargar();
+  }
+
+  function abrirFaq(i) {
+    const lista = FAQ.map(x => [x[0], x[1]]);
+    if (i < 0 && lista.length >= 12) { alert('Máximo 12 preguntas.'); return; }
+    const cur = i >= 0 ? lista[i] : ['', ''];
+    cerrar();
+    const p = document.createElement('div'); p.id = 'ed-pop';
+    p.innerHTML = `<div class="in"><h3>${i >= 0 ? 'Editar pregunta' : 'Nueva pregunta'}</h3><label>Pregunta<input id="fq-q" value="${E(cur[0])}"/></label><label>Respuesta<textarea id="fq-a" rows="4">${E(cur[1])}</textarea></label><div class="msg" id="ed-msg"></div><div class="row"><button class="p" id="fq-ok" type="button">Guardar</button><button id="ed-no" type="button">Cancelar</button>${i >= 0 ? '<button id="fq-del" type="button" style="color:#a33;border-color:#a33">Borrar</button>' : ''}</div></div>`;
+    document.body.appendChild(p);
+    byId('ed-no').onclick = cerrar;
+    byId('fq-ok').onclick = () => {
+      const q = byId('fq-q').value.trim(), a = byId('fq-a').value.trim();
+      if (!q) { byId('ed-msg').textContent = 'Escribí la pregunta.'; return; }
+      if (i >= 0) lista[i] = [q, a]; else lista.push([q, a]);
+      guardarFaq(lista);
+    };
+    if (byId('fq-del')) byId('fq-del').onclick = () => {
+      if (!confirm('¿Borrar esta pregunta?')) return;
+      lista.splice(i, 1);
+      guardarFaq(lista);
+    };
+  }
+
+  bar.insertAdjacentHTML('beforeend', '<button id="ed-nf" type="button">+ Pregunta</button>');
+  byId('ed-nf').onclick = () => abrirFaq(-1);
+
+  let hov3 = null;
+  document.addEventListener('mouseover', e => {
+    if (hov3) hov3.classList.remove('ed-hover3');
+    hov3 = null;
+    if (e.target.closest('#ed-pop, #ed-bar')) return;
+    const m = muHit(e.target);
+    const d = e.target.closest('#faq details');
+    const t = m ? m.el() : d;
+    if (t) { hov3 = t; t.classList.add('ed-hover3'); }
+  });
+  document.addEventListener('click', e => {
+    if (e.target.closest('#ed-pop, #ed-bar')) return;
+    const d = e.target.closest('#faq details');
+    if (d) { e.preventDefault(); e.stopPropagation(); abrirFaq([...byId('faq').children].indexOf(d)); return; }
+    const m = muHit(e.target);
+    if (m) { e.preventDefault(); e.stopPropagation(); abrirMulti(m); }
+  }, true);
   const y = sessionStorage.getItem('edY');
   if (y) { sessionStorage.removeItem('edY'); setTimeout(() => window.scrollTo(0, +y), 1500); }
 })();
