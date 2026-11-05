@@ -603,7 +603,7 @@ const LOGOSLOT = p => p.src
 function initLogos() {
   $$('.logo').forEach(img => {
     const fb = img.nextElementSibling;
-    fb.textContent = BRAND.siglas;
+    fb.textContent = BRAND.siglas; img.style.display = ''; fb.classList.add('hidden'); fb.classList.remove('flex');
     const showFb = () => { img.style.display = 'none'; fb.classList.remove('hidden'); fb.classList.add('flex'); };
     if (!IMG.logo) return showFb();
     img.onerror = showFb;
@@ -993,6 +993,24 @@ async function cargarDatosDesdeSupabase() {
   if (fq.length) { FAQ.length = 0; fq.forEach(x => FAQ.push(x)); }
   if (cfg.footer_blurb) BRAND.blurb = cfg.footer_blurb;
   if (cfg.partners_title) document.querySelector('#home-logos').parentElement.querySelector('p').textContent = cfg.partners_title;
+
+  ['animales', 'contacto'].forEach(k => {
+    if (cfg[k + '_badge']) PAGES[k].badge = cfg[k + '_badge'];
+    if (cfg[k + '_title']) PAGES[k].h1 = cfg[k + '_title'];
+    if (cfg[k + '_sub']) PAGES[k].sub = cfg[k + '_sub'];
+    if (cfg[k + '_img']) PAGES[k].bg = cfg[k + '_img'];
+  });
+  if (cfg.logo_img) IMG.logo = cfg.logo_img;
+  BRAND.siglas = cfg.siglas || BRAND.nombre.replace(/^(Cabaña|Cabana|Criadero|Estancia)\s+/i, '').split(/\s+/).filter(Boolean).slice(0, 2).map(w => w[0]).join('').toUpperCase() || BRAND.siglas;
+  {
+    let k = location.hash.replace(/^#\/?/, '') || 'inicio';
+    if (k === 'en-venta') k = 'animales';
+    const p = PAGES[k] || PAGES.inicio;
+    $('#hero-badge').textContent = p.badge;
+    $('#hero-title').innerHTML = p.h1;
+    $('#hero-sub').textContent = p.sub;
+    $('#hero-bg').style.backgroundImage = p.bg ? `url('${p.bg}')` : 'none';
+  }
   
   if (cfg.about_title) ABOUT.titulo = cfg.about_title;
   if (cfg.about_text) ABOUT.texto = cfg.about_text;
@@ -1592,6 +1610,20 @@ async function cargarDatosDesdeSupabase() {
     const f = e.target.closest('#home-gallery figure');
     if (f) { e.preventDefault(); e.stopPropagation(); abrirGal([...byId('home-gallery').children].indexOf(f)); }
   }, true);
+
+  /* ===== LOGO Y PORTADAS DE MIS ANIMALES Y CONTACTO ===== */
+  add('logo_img', 'Logo de la cabaña (reemplaza las iniciales)', 'img', () => {
+    const i = document.querySelector('#topbar .logo'), f = document.querySelector('#topbar .logo-fb');
+    return (i && i.style.display !== 'none') ? i : f;
+  });
+  const paginaActual = () => { const k = location.hash.replace(/^#\/?/, '') || 'inicio'; return k === 'en-venta' ? 'animales' : k; };
+  ['animales', 'contacto'].forEach(k => {
+    const aca = () => paginaActual() === k;
+    add(k + '_badge', 'Etiqueta sobre el título', 'txt', () => aca() && byId('hero-badge'));
+    add(k + '_title', 'Título principal', 'dest', () => aca() && byId('hero-title'), { sep: '<br/>' });
+    add(k + '_sub', 'Texto debajo del título', 'area', () => aca() && byId('hero-sub'));
+    add(k + '_img', 'Foto de portada', 'img', () => aca() && byId('hero'), { noLinks: true });
+  });
 
   
   const y = sessionStorage.getItem('edY');
