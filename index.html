@@ -1010,7 +1010,7 @@ async function cargarDatosDesdeSupabase() {
   const secCria = document.querySelector('#home-bento').closest('section');
   if (cfg.cria_title) secCria.querySelector('h2').innerHTML = cfg.cria_title;
   if (cfg.cria_text) secCria.querySelector('p').textContent = cfg.cria_text;
-  const { data: par } = await supabaseClient.from('partners').select('*').order('sort_order');   if (par && par.length) { PARTNERS.length = 0; par.forEach(p => PARTNERS.push({ n: p.name, src: p.image_url || '' })); }
+  const { data: par } = await supabaseClient.from('partners').select('*').order('sort_order');   if (par && par.length) { PARTNERS.length = 0; par.forEach(p => PARTNERS.push({ id: p.id, o: p.sort_order, n: p.name, src: p.image_url || '' })); }
    const secGal = document.querySelector('#home-gallery').closest('section');
   
   if (cfg.gallery_title) secGal.querySelector('h2').innerHTML = cfg.gallery_title;
@@ -1456,6 +1456,72 @@ async function cargarDatosDesdeSupabase() {
     const m = muHit(e.target);
     if (m) { e.preventDefault(); e.stopPropagation(); abrirMulti(m); }
   }, true);
+  /* ===== LOGOS: registros y respaldo ===== */
+  const st4 = document.createElement('style');
+  st4.textContent = `.ed-hover4{outline:2px dashed #d9a441!important;outline-offset:3px;cursor:pointer!important}`;
+  document.head.appendChild(st4);
+  bar.insertAdjacentHTML('beforeend', '<button id="ed-np" type="button">+ Logo</button>');
+
+  let PF = '';
+  function abrirLogo(i) {
+    const lg = i >= 0 ? PARTNERS[i] : null;
+    if (lg && !lg.id) { alert('Este logo es de ejemplo. Agregá uno nuevo con el botón "+ Logo".'); return; }
+    PF = lg ? (lg.src || '') : '';
+    const maxO = Math.max(0, ...PARTNERS.map(x => x.o || 0));
+    cerrar();
+    const p = document.createElement('div'); p.id = 'ed-pop';
+    p.innerHTML = `<div class="in"><h3>${lg ? 'Editar logo' : 'Nuevo logo'}</h3>
+      <label>Nombre (se muestra cuando no hay imagen)<input id="lg-n" value="${E(lg ? lg.n : '')}"/></label>
+      <label>Orden<input id="lg-o" type="number" value="${E(lg ? (lg.o || 1) : maxO + 1)}"/></label>
+      <label>Imagen del logo<input id="lg-f" type="file" accept="image/*"/></label>
+      <img id="lg-img" style="max-width:200px;display:none;margin-top:8px;border-radius:6px"/>
+      <button type="button" id="lg-q" style="margin-top:8px;padding:4px 8px;font-size:12px">Quitar imagen</button>
+      <div class="msg" id="ed-msg"></div>
+      <div class="row"><button class="p" id="lg-ok" type="button">Guardar</button><button id="ed-no" type="button">Cancelar</button>${lg ? '<button id="lg-del" type="button" style="color:#a33;border-color:#a33">Borrar</button>' : ''}</div></div>`;
+    document.body.appendChild(p);
+    const pintar = () => { const im = byId('lg-img'); im.src = PF || ''; im.style.display = PF ? 'block' : 'none'; };
+    pintar();
+    byId('lg-f').onchange = async () => {
+      const f = byId('lg-f').files[0]; if (!f) return;
+      byId('ed-msg').textContent = 'Subiendo imagen...';
+      try { PF = await subir(f); pintar(); byId('ed-msg').textContent = ''; }
+      catch (err) { byId('ed-msg').textContent = 'Error al subir: ' + err.message; }
+    };
+    byId('lg-q').onclick = () => { PF = ''; pintar(); };
+    byId('ed-no').onclick = cerrar;
+    byId('lg-ok').onclick = async () => {
+      const row = { name: byId('lg-n').value.trim(), image_url: PF || null, sort_order: parseInt(byId('lg-o').value) || 1 };
+      if (!row.name) { byId('ed-msg').textContent = 'Poné un nombre.'; return; }
+      byId('ed-msg').textContent = 'Guardando...';
+      const { error } = lg
+        ? await supabaseClient.from('partners').update(row).eq('id', lg.id).eq('site_id', SITE)
+        : await supabaseClient.from('partners').insert({ ...row, site_id: SITE });
+      if (error) { byId('ed-msg').textContent = 'Error: ' + error.message; return; }
+      recargar();
+    };
+    if (byId('lg-del')) byId('lg-del').onclick = async () => {
+      if (!confirm('¿Borrar este logo?')) return;
+      const { error } = await supabaseClient.from('partners').delete().eq('id', lg.id).eq('site_id', SITE);
+      if (error) byId('ed-msg').textContent = 'Error: ' + error.message; else recargar();
+    };
+  }
+
+  byId('ed-np').onclick = () => abrirLogo(-1);
+
+  let hov4 = null;
+  document.addEventListener('mouseover', e => {
+    if (hov4) hov4.classList.remove('ed-hover4');
+    hov4 = null;
+    if (e.target.closest('#ed-pop, #ed-bar')) return;
+    const d = e.target.closest('#home-logos > div');
+    if (d) { hov4 = d; d.classList.add('ed-hover4'); }
+  });
+  document.addEventListener('click', e => {
+    if (e.target.closest('#ed-pop, #ed-bar')) return;
+    const d = e.target.closest('#home-logos > div');
+    if (d) { e.preventDefault(); e.stopPropagation(); abrirLogo([...byId('home-logos').children].indexOf(d)); }
+  }, true);
+  
   const y = sessionStorage.getItem('edY');
   if (y) { sessionStorage.removeItem('edY'); setTimeout(() => window.scrollTo(0, +y), 1500); }
 })();
