@@ -1110,7 +1110,7 @@ async function cargarDatosDesdeSupabase() {
 
   const cerrar = () => { const p = byId('ed-pop'); if (p) p.remove(); };
 
-  async function subir(file) {
+  async function comprimir(file, max = 1600) {     if (!/^image\/(jpeg|png)$/.test(file.type)) return file;     try {       const bmp = await createImageBitmap(file);       const k = Math.min(1, max / Math.max(bmp.width, bmp.height));       const w = Math.round(bmp.width * k), h = Math.round(bmp.height * k);       const c = document.createElement('canvas'); c.width = w; c.height = h;       c.getContext('2d').drawImage(bmp, 0, 0, w, h);       const tipo = file.type === 'image/png' ? 'image/png' : 'image/jpeg';       const blob = await new Promise(r => c.toBlob(r, tipo, 0.82));       if (!blob || blob.size >= file.size) return file;       return new File([blob], file.name.replace(/\.[^.]+$/, '') + (tipo === 'image/png' ? '.png' : '.jpg'), { type: tipo });     } catch (e) { return file; }   }    async function subir(file) {     file = await comprimir(file);
     const ext = (file.name.split('.').pop() || 'jpg').toLowerCase();
     const path = `${SITE}/${Date.now()}-${Math.random().toString(36).slice(2, 7)}.${ext}`;
     const { error } = await supabaseClient.storage.from('animales').upload(path, file, { cacheControl: '3600' });
