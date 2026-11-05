@@ -908,7 +908,7 @@ async function cargarDatosDesdeSupabase() {
 
   // 2. Cargar Animales
   const { data: animals } = await supabaseClient.from('animals').select('*');
-  if (animals && animals.length > 0 && typeof ANIMALES !== 'undefined') {
+  if (animals && typeof ANIMALES !== 'undefined') {
     ANIMALES.length = 0;
     animals.forEach(a => {
       ANIMALES.push({
@@ -931,7 +931,7 @@ async function cargarDatosDesdeSupabase() {
 
   // 3. Cargar Lotes
   const { data: lotsData } = await supabaseClient.from('lots').select('*');
-  if (lotsData && lotsData.length > 0 && typeof LOTES !== 'undefined') {
+  if (lotsData && typeof LOTES !== 'undefined') {
     LOTES.length = 0;
     lotsData.forEach(l => {
       LOTES.push([
@@ -1032,7 +1032,7 @@ async function cargarDatosDesdeSupabase() {
   const secCria = document.querySelector('#home-bento').closest('section');
   if (cfg.cria_title) secCria.querySelector('h2').innerHTML = cfg.cria_title;
   if (cfg.cria_text) secCria.querySelector('p').textContent = cfg.cria_text;
-  const { data: par } = await supabaseClient.from('partners').select('*').order('sort_order');   if (par && par.length) { PARTNERS.length = 0; par.forEach(p => PARTNERS.push({ id: p.id, o: p.sort_order, n: p.name, src: p.image_url || '' })); }
+  const { data: par } = await supabaseClient.from('partners').select('*').order('sort_order');   if (par) { PARTNERS.length = 0; par.forEach(p => PARTNERS.push({ id: p.id, o: p.sort_order, n: p.name, src: p.image_url || '' })); }
    const secGal = document.querySelector('#home-gallery').closest('section');
   
   if (cfg.gallery_title) secGal.querySelector('h2').innerHTML = cfg.gallery_title;
