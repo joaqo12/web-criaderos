@@ -48,6 +48,12 @@
   .card h3 { margin: 0 0 8px; font-size: 16px; }
   .campo { margin-top: 14px; }
   
+  .catzona { min-height: 60px; border: 2px dashed #d3ccb8; border-radius: 10px; padding: 8px; margin-top: 6px; display: flex; flex-wrap: wrap; gap: 8px; align-content: flex-start; }
+  .catzona.sobre { border-color: #1f3a2b; background: #eef3ea; }
+  .catchip { margin: 0; padding: 7px 12px; border-radius: 999px; border: 1px solid #1f3a2b; background: #fff; color: #1f3a2b; font-weight: 700; font-size: 13px; cursor: grab; }
+  #cat-on .catchip { background: #1f3a2b; color: #f4f0e6; }
+  .catgrupo { width: 100%; font-size: 11px; font-weight: 700; color: #5d6b61; text-transform: uppercase; letter-spacing: .08em; margin-top: 4px; }
+
   
 </style>
 </head>
@@ -79,6 +85,17 @@
     <div class="acc"><button id="btn-vista" class="sec">Ver vista previa</button><button id="btn-editor">Editar mi web</button><button id="salir">Cerrar sesión</button></div>
   </div>
   <h2>Animales</h2>
+
+  <div class="card" id="cat-box">
+    <b>Categorías</b>
+    <p style="font-size:13px;margin:4px 0 10px">Tocá una categoría para pasarla de un lado al otro, o arrastrala. Solo las que están en uso aparecen en tu web y al crear animales.</p>
+    <div class="grid2">
+      <div><small><b>En uso</b></small><div id="cat-on" class="catzona"></div></div>
+      <div><small><b>Sin usar</b></small><div id="cat-off" class="catzona"></div></div>
+    </div>
+    <div id="cat-msg" class="err"></div>
+  </div>
+  
   <button id="a-nuevo">+ Nuevo animal</button>
   <div id="a-msg" class="err"></div>
 
@@ -196,7 +213,7 @@ async function iniciar() {
   SITE = asign[0].site_id;   $('#app-link').href = '/?c=' + SITE;   $('#app-link').textContent = location.origin + '/?c=' + SITE;
   $('#app-title').textContent = asign[0].sites ? asign[0].sites.name : SITE;
   $('#app-user').textContent = 'Sesión iniciada como ' + session.user.email;
-  $('#login').classList.add('hidden'); $('#app').classList.remove('hidden');   armarPanel(); cargarAnimales(); cargarLotes(); cargarSettings(); GRUPOS.forEach(cargarGrupo); cargarCampos();
+  $('#login').classList.add('hidden'); $('#app').classList.remove('hidden');   armarPanel(); cargarCategorias(); cargarAnimales(); cargarLotes(); cargarSettings(); GRUPOS.forEach(cargarGrupo); cargarCampos();
 }
 
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -245,7 +262,7 @@ function pintarFotos() {
 function abrirForm(a) {
   EDIT = a ? a.id : null;
   $('#a-name').value = a?.name || '';
-  $('#a-cat').value = a?.category || CATS[0];
+  $('#a-cat').innerHTML = catOpciones(a?.category);   if (!$('#a-cat').options.length) { $('#a-msg').textContent = 'Primero poné una categoría en uso en la caja Categorías.'; return; }   $('#a-cat').value = a?.category || $('#a-cat').options[0].value;
   $('#a-tag').value = a?.tag || '';
   $('#a-breed').value = a?.breed || '';
   $('#a-rp').value = a?.rp || '';
@@ -320,7 +337,7 @@ $('#l-status').innerHTML = ESTADOS.map(c => `<option>${c}</option>`).join('');
 function abrirLote(l) {
   LEDIT = l ? l.id : null;
   $('#l-code').value = l?.lot_code || '';
-  $('#l-cat').value = l?.category || CATS[0];
+  $('#l-cat').innerHTML = catOpciones(l?.category);   if (!$('#l-cat').options.length) { $('#l-msg').textContent = 'Primero poné una categoría en uso en la caja Categorías.'; return; }   $('#l-cat').value = l?.category || $('#l-cat').options[0].value;
   $('#l-desc').value = l?.description || '';
   $('#l-breed').value = l?.breed || '';
   $('#l-qty').value = l?.quantity ?? '';
@@ -710,6 +727,63 @@ $('#s-add').onclick = async () => {
   cargarSettings();
 };
   
+
+let CATS_LISTA = [], CATS_ON = new Set();
+const catOn = id => !CATS_LISTA.length || CATS_ON.has(id);
+
+function catOpciones(actual) {
+  const todas = CATS_LISTA.length ? CATS_LISTA : CATS.map(id => ({ id, label: id }));
+  let l = todas.filter(c => catOn(c.id));
+  if (actual && !l.some(c => c.id === actual)) l = l.concat([todas.find(c => c.id === actual) || { id: actual, label: actual }]);
+  return l.map(c => `<option value="${esc(c.id)}">${esc(c.label)}${catOn(c.id) ? '' : ' (sin usar)'}</option>`).join('');
+}
+
+function pintarCategorias() {
+  const zona = (el, on) => {
+    let g = null, h = '';
+    CATS_LISTA.filter(c => CATS_ON.has(c.id) === on).forEach(c => {
+      if (c.grupo !== g) { g = c.grupo; h += `<div class="catgrupo">${esc(g)}</div>`; }
+      h += `<button type="button" class="catchip" draggable="true" data-cat="${esc(c.id)}">${esc(c.label)}</button>`;
+    });
+    $(el).innerHTML = h || '<small>(vacío)</small>';
+  };
+  zona('#cat-on', true); zona('#cat-off', false);
+}
+
+async function cargarCategorias() {
+  const [cr, sc] = await Promise.all([
+    sb.from('categories').select('*').order('sort_order'),
+    sb.from('site_categories').select('category_id').eq('site_id', SITE)
+  ]);
+  if (cr.error || sc.error) { $('#cat-msg').textContent = (cr.error || sc.error).message; return; }
+  CATS_LISTA = cr.data; CATS_ON = new Set(sc.data.map(r => r.category_id));
+  pintarCategorias();
+}
+
+async function moverCat(id, encender) {
+  const msg = $('#cat-msg'); msg.textContent = '';
+  if (CATS_ON.has(id) === encender) return;
+  if (!encender) {
+    const na = LISTA.filter(a => a.category === id).length, nl = LOTS.filter(l => l.category === id).length;
+    if ((na || nl) && !confirm(`Hay ${na} animales y ${nl} lotes en esta categoría que dejarán de verse en tu web. No se borran, y vuelven a verse cuando la prendas de nuevo. ¿Apagarla?`)) return;
+  }
+  const { error } = encender
+    ? await sb.from('site_categories').insert({ site_id: SITE, category_id: id })
+    : await sb.from('site_categories').delete().eq('site_id', SITE).eq('category_id', id);
+  if (error) { msg.textContent = 'Error: ' + error.message; return; }
+  if (encender) CATS_ON.add(id); else CATS_ON.delete(id);
+  pintarCategorias();
+  if (document.body.classList.contains('vista')) refrescarVista();
+}
+
+['#cat-on', '#cat-off'].forEach(sel => {
+  const z = $(sel), enc = sel === '#cat-on';
+  z.addEventListener('click', e => { const b = e.target.closest('[data-cat]'); if (b) moverCat(b.dataset.cat, !CATS_ON.has(b.dataset.cat)); });
+  z.addEventListener('dragstart', e => { const b = e.target.closest('[data-cat]'); if (b) e.dataTransfer.setData('text/plain', b.dataset.cat); });
+  z.addEventListener('dragover', e => { e.preventDefault(); z.classList.add('sobre'); });
+  z.addEventListener('dragleave', () => z.classList.remove('sobre'));
+  z.addEventListener('drop', e => { e.preventDefault(); z.classList.remove('sobre'); const id = e.dataTransfer.getData('text/plain'); if (id) moverCat(id, enc); });
+});
   
 $('#f-login').addEventListener('submit', async e => {
   e.preventDefault();
