@@ -1206,6 +1206,19 @@ async function cargarDatosDesdeSupabase() {
     p.innerHTML = `<div class="in"><h3>Colores de la web</h3>${COLS.map(([k, l]) => (k === 'ink' ? '<h4 style="margin:6px 0 0;font-size:13px;border-bottom:1px solid #dcd5c3;padding-bottom:4px">Colores de los textos</h4>' : k === 'main' ? '<h4 style="margin:22px 0 0;font-size:13px;border-bottom:1px solid #dcd5c3;padding-bottom:4px">Colores de la página</h4>' : '') + `<label>${l}<input type="color" id="ed-c-${k}" value="${cs.getPropertyValue('--c-' + k).trim()}" style="height:40px;padding:2px"/></label>`).join('')}<div class="msg" id="ed-msg"></div><div class="row"><button class="p" id="ed-ok" type="button">Guardar</button><button id="ed-no" type="button">Cancelar</button><button id="ed-rs" type="button">Volver a los originales</button></div></div>`;
     document.body.appendChild(p);
     byId('ed-no').onclick = cerrar;
+
+    p.querySelectorAll('h4').forEach(h => h.remove());
+    const grupo = (titulo, keys) => {
+      const d = document.createElement('details');
+      d.style.cssText = 'border:1px solid #dcd5c3;border-radius:8px;margin-top:10px;padding:0 12px';
+      d.innerHTML = `<summary style="cursor:pointer;padding:10px 0;font-weight:700;font-size:14px">${titulo}</summary>`;
+      keys.forEach(k => { const inp = byId('ed-c-' + k); if (inp && inp.closest('label')) d.appendChild(inp.closest('label')); });
+      return d;
+    };
+    const msgCol = byId('ed-msg');
+    msgCol.before(grupo('Colores de los textos', ['ink', 'muted', 'accent', 'brass', 'dtext', 'dmuted', 'daccent', 'dbrass']));
+    msgCol.before(grupo('Colores de la página', ['main', 'mid', 'light', 'dark', 'band1', 'band2', 'cta', 'bg', 'bg2', 'card', 'line']));
+    
     byId('ed-rs').onclick = () => restaurar(COLS.map(([k]) => 'color_' + k));
     byId('ed-ok').onclick = async () => {
       const rows = COLS.map(([k]) => ({ site_id: SITE, key: 'color_' + k, value: byId('ed-c-' + k).value, image_url: null, updated_at: new Date().toISOString() }));
