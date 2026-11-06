@@ -74,14 +74,14 @@
   .panel { position: relative; border-radius: 12px; border: 1px solid var(--line); background: var(--card);
            box-shadow: 0 1px 0 rgba(255,255,255,.8) inset, 0 10px 28px -18px rgba(31,58,43,.38);
            transition: transform .25s, border-color .25s, box-shadow .25s; }
-  .panel::before { content: ''; position: absolute; left: 0; right: 0; top: 0; height: 3px; border-radius: 12px 12px 0 0; background: linear-gradient(90deg, var(--c-mid), #8fa88f 60%, #a98a4d); opacity: .9; }
-  .panel:hover { transform: translateY(-2px); border-color: #a9bba7; box-shadow: 0 20px 44px -22px rgba(31,58,43,.55); }
+  .panel::before { content: ''; position: absolute; left: 0; right: 0; top: 0; height: 3px; border-radius: 12px 12px 0 0; background: linear-gradient(90deg, var(--c-mid), var(--c-sage) 60%, var(--c-gold)); opacity: .9; }
+  .panel:hover { transform: translateY(-2px); border-color: var(--c-sage); box-shadow: 0 20px 44px -22px rgba(31,58,43,.55); }
   .panel-static:hover { transform: none; border-color: var(--line); box-shadow: 0 1px 0 rgba(255,255,255,.8) inset, 0 10px 28px -18px rgba(31,58,43,.38); }
   .on-dark .panel { box-shadow: none; }
   .on-dark .panel:hover { border-color: rgba(217,191,133,.5); box-shadow: 0 20px 44px -22px rgba(0,0,0,.6); }
   .on-dark .panel-static:hover { border-color: var(--line); box-shadow: none; }
 
-  .ibox { width: 40px; height: 40px; border-radius: 8px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; color: var(--c-mid); background: #dfe7da; border: 1px solid #c3d1bd; }
+  .ibox { width: 40px; height: 40px; border-radius: 8px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; color: var(--c-mid); background: var(--c-tint); border: 1px solid var(--c-tintline); }
   .on-dark .ibox { color: #e6dfc8; background: rgba(241,237,226,.1); border-color: rgba(241,237,226,.25); }
 
   /* Bandas */
@@ -121,9 +121,9 @@
   .st-res  { background: #f2e7c9; color: #7a5f22; border-color: #d9c288; }
   .st-plan { background: #ece3d8; color: #6a4a38; border-color: #cfbca9; }
 
-  .input { margin-top: 8px; width: 100%; background: var(--card); border: 1px solid #d3ccb8; border-radius: 8px; padding: 12px 16px; font-size: 13.5px; color: var(--ink); transition: border-color .2s, box-shadow .2s; }
+  .input { margin-top: 8px; width: 100%; background: var(--card); border: 1px solid var(--line); border-radius: 8px; padding: 12px 16px; font-size: 13.5px; color: var(--ink); transition: border-color .2s, box-shadow .2s; }
   .input::placeholder { color: #8d9990; }
-  .input:focus { outline: none; border-color: var(--c-mid); box-shadow: 0 0 0 3px rgba(47,90,66,.16); }
+  .input:focus { outline: none; border-color: var(--c-mid); box-shadow: 0 0 0 3px color-mix(in srgb, var(--c-mid) 16%, transparent); }
 
   /* Placeholders de imagen */
   .ph { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px; text-align: center; padding: 12px;
@@ -164,6 +164,9 @@
     #skel .err button { pointer-events: auto; }
   @media (max-width: 700px) { #skel .grid { grid-template-columns: 1fr; } #skel .card:nth-child(n+2) { display: none; } }
   @media (prefers-reduced-motion: reduce) { .sk, body.cargando .brand-name, body.cargando .brand-sub { animation: none; } }
+
+  :root { --c-sage: #8fa88f; --c-gold: #a98a4d; --c-tint: #dfe7da; --c-tintline: #c3d1bd; }
+
   
 </style>
 <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
@@ -667,7 +670,7 @@ function renderStatic() {
   // En venta
   $('#pasos').innerHTML = PASOS.map(([t, d], i) => `
     <li class="panel p-6 space-y-3">
-      <span class="font-sans text-4xl font-bold" style="color:#a98a4d">0${i + 1}</span>
+      <span class="font-sans text-4xl font-bold" style="color:var(--c-gold)">0${i + 1}</span>
       <h3 class="ink font-sans text-base font-bold">${t}</h3><p class="muted text-[13px] leading-relaxed">${d}</p>
     </li>`).join('');
   $('#condiciones').innerHTML = CONDICIONES.map(c => `<div class="panel p-7 space-y-3.5">${ICONBOX(c.i)}<h3 class="ink font-sans text-xl font-bold">${c.t}</h3><p class="muted text-[13.5px] leading-relaxed">${c.d}</p></div>`).join('');
@@ -744,8 +747,8 @@ function renderAnimales() {
           <h3 class="ink font-sans text-xl font-bold">${a.n}</h3>
           <p class="brass text-[12px] font-semibold tracking-wide mt-0.5">${a.raza} · ${a.rp}</p>
         </div>
-        <dl class="grid grid-cols-2 gap-2.5 text-[12.5px]">${a.f.slice(0, 4).map(([k, v]) => `<div class="rounded-md p-3" style="background:#f1ede1;border:1px solid #e2dbc9"><dt class="muted text-[10.5px] uppercase tracking-wider">${k}</dt><dd class="ink font-bold mt-0.5">${v}</dd></div>`).join('')}</dl>
-        <div class="flex flex-wrap gap-1.5">${a.tags.map(t => `<span class="text-[10.5px] font-semibold px-2.5 py-1 rounded-full" style="color:var(--c-mid);background:#e6ecde;border:1px solid #c9d6c0">${t}</span>`).join('')}</div>
+        <dl class="grid grid-cols-2 gap-2.5 text-[12.5px]">${a.f.slice(0, 4).map(([k, v]) => `<div class="rounded-md p-3" style="background:var(--bg2);border:1px solid var(--line)"><dt class="muted text-[10.5px] uppercase tracking-wider">${k}</dt><dd class="ink font-bold mt-0.5">${v}</dd></div>`).join('')}</dl>
+        <div class="flex flex-wrap gap-1.5">${a.tags.map(t => `<span class="text-[10.5px] font-semibold px-2.5 py-1 rounded-full" style="color:var(--c-mid);background:var(--c-tint);border:1px solid var(--c-tintline)">${t}</span>`).join('')}</div>
       </div>
       <div class="pt-5 mt-5 flex items-center justify-between gap-3" style="border-top:1px solid var(--line)">
         <div><p class="muted text-[10.5px] uppercase tracking-wider">Precio</p><p class="ink text-[13px] font-bold">${a.precio}</p></div>
@@ -788,7 +791,7 @@ function renderFicha() {
           <h3 class="ink font-sans text-3xl font-bold leading-tight">${a.n}</h3>
           <p class="brass text-[13px] font-semibold tracking-wide mt-1">${a.raza} · ${a.rp}</p>
         </div>
-        <div class="rounded-lg px-5 py-4 flex items-center justify-between" style="background:#e3ebdc;border:1px solid #c3d1bd">
+        <div class="rounded-lg px-5 py-4 flex items-center justify-between" style="background:var(--c-tint);border:1px solid var(--c-tintline)">
           <span class="text-[11px] uppercase tracking-[0.16em] font-bold" style="color:var(--c-mid)">Precio</span>
           <span class="text-[16px] font-bold" style="color:var(--c-main)">${a.precio}</span>
         </div>
@@ -1012,7 +1015,7 @@ async function cargarDatosDesdeSupabase() {
     $('#hero-bg').style.backgroundImage = p.bg ? `url('${p.bg}')` : 'none';
   }
 
-  ['ink', 'muted', 'accent', 'brass', 'dtext', 'dmuted', 'daccent', 'dbrass'].forEach(k => {
+  ['ink', 'muted', 'accent', 'brass', 'dtext', 'dmuted', 'daccent', 'dbrass', 'sage', 'gold', 'tint', 'tintline'].forEach(k => {
     if (cfg['color_' + k]) document.documentElement.style.setProperty('--c-' + k, cfg['color_' + k]);
   });
 
@@ -1199,7 +1202,7 @@ async function cargarDatosDesdeSupabase() {
     byId('ed-rs').onclick = () => restaurar([h.k]);
   }
 
-  const COLS = [['ink', 'Títulos y textos oscuros'], ['muted', 'Párrafos'], ['accent', 'Parte destacada de los títulos'], ['brass', 'Etiquetas pequeñas (dorado)'], ['dtext', 'Títulos sobre fondo oscuro (portada y pie)'], ['dmuted', 'Párrafos sobre fondo oscuro'], ['daccent', 'Parte destacada sobre fondo oscuro'], ['dbrass', 'Etiquetas doradas sobre fondo oscuro'], ['main', 'Color principal'], ['mid', 'Color secundario'], ['light', 'Color claro (botones)'], ['dark', 'Fondo oscuro (portada y pie)'], ['band1', 'Banda de color, arriba'], ['band2', 'Banda de color, abajo'], ['cta', 'Banner de consulta'], ['bg', 'Fondo de la web (hueso)'], ['bg2', 'Fondo de las bandas (hueso oscuro)'], ['card', 'Fondo de tarjetas'], ['line', 'Bordes y líneas']];
+  const COLS = [['ink', 'Títulos y textos oscuros'], ['muted', 'Párrafos'], ['accent', 'Parte destacada de los títulos'], ['brass', 'Etiquetas pequeñas (dorado)'], ['dtext', 'Títulos sobre fondo oscuro (portada y pie)'], ['dmuted', 'Párrafos sobre fondo oscuro'], ['daccent', 'Parte destacada sobre fondo oscuro'], ['dbrass', 'Etiquetas doradas sobre fondo oscuro'], ['sage', 'Detalle suave (franja de tarjetas)'], ['gold', 'Dorado de detalles (franja y números)'], ['tint', 'Fondo de íconos y etiquetas'], ['tintline', 'Borde de íconos y etiquetas'], ['main', 'Color principal'], ['mid', 'Color secundario'], ['light', 'Color claro (botones)'], ['dark', 'Fondo oscuro (portada y pie)'], ['band1', 'Banda de color, arriba'], ['band2', 'Banda de color, abajo'], ['cta', 'Banner de consulta'], ['bg', 'Fondo de la web (hueso)'], ['bg2', 'Fondo de las bandas (hueso oscuro)'], ['card', 'Fondo de tarjetas'], ['line', 'Bordes y líneas']];
   byId('ed-col').onclick = () => {
     const cs = getComputedStyle(document.documentElement);
     const p = document.createElement('div'); p.id = 'ed-pop';
@@ -1217,7 +1220,7 @@ async function cargarDatosDesdeSupabase() {
     };
     const msgCol = byId('ed-msg');
     msgCol.before(grupo('Colores de los textos', ['ink', 'muted', 'accent', 'brass', 'dtext', 'dmuted', 'daccent', 'dbrass']));
-    msgCol.before(grupo('Colores de la página', ['main', 'mid', 'light', 'dark', 'band1', 'band2', 'cta', 'bg', 'bg2', 'card', 'line']));
+    msgCol.before(grupo('Colores de la página', ['main', 'mid', 'light', 'dark', 'band1', 'band2', 'cta', 'bg', 'bg2', 'card', 'line', 'sage', 'gold', 'tint', 'tintline']));
     
     byId('ed-rs').onclick = () => restaurar(COLS.map(([k]) => 'color_' + k));
     byId('ed-ok').onclick = async () => {
