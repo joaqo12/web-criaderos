@@ -169,6 +169,11 @@
   <div class="barra"><button class="sec" id="vista-refresh" type="button">Actualizar</button><span style="flex:1"></span><small>Así se ve tu web</small></div>
   <iframe id="vista-frame"></iframe>
 </div>
+
+<script>
+window.addEventListener('error', e => document.body.insertAdjacentHTML('afterbegin', '<pre style="color:#a33;padding:16px;white-space:pre-wrap">Error: ' + e.message + ' (línea ' + e.lineno + ')</pre>'));
+window.addEventListener('unhandledrejection', e => document.body.insertAdjacentHTML('afterbegin', '<pre style="color:#a33;padding:16px;white-space:pre-wrap">Error: ' + (e.reason && e.reason.message || e.reason) + '</pre>'));
+</script>
   
 <script>
 const SUPABASE_URL = 'https://wavxivsalphthkmekzla.supabase.co';
