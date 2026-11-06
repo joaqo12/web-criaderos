@@ -20,18 +20,18 @@
     --bg2: var(--c-bg2); --c-bg2: #ebe6d9;     /* hueso oscuro (bandas) */
     --card: var(--c-card); --c-card: #fbf9f3;    /* papel */
     --line: var(--c-line); --c-line: #dcd5c3;
-    --ink: #1d2a22;     /* texto: verde casi negro */
-    --muted: #5d6b61;
+    --ink: var(--c-ink); --c-ink: #1d2a22;     /* texto: verde casi negro */
+    --muted: var(--c-muted); --c-muted: #5d6b61;
     --green: var(--c-main);   /* verde bosque */
     --green2: var(--c-mid);
     --sage: #8fa88f;
     --sagepale: #dfe7da;
     --brass: #a98a4d;
-    --brassdark: #8a6f36;
+    --brassdark: var(--c-brass); --c-brass: #8a6f36;
         --c-dark: #14261c; --c-main: #1f3a2b; --c-mid: #2f5a42; --c-light: #3a7355;
-    --c-band1: #26442f; --c-band2: #1a3023; --c-cta: #34674c;
+    --c-band1: #26442f; --c-band2: #1a3023;  --c-accent: var(--c-mid); --c-dtext: #f1ede2; --c-dmuted: #bccabd; --c-daccent: #c5dbb9; --c-dbrass: #d9bf85; --c-accent: var(--c-mid); --c-dtext: #f1ede2; --c-dmuted: #bccabd; --c-daccent: #c5dbb9; --c-dbrass: #d9bf85; --c-accent: var(--c-mid); --c-dtext: #f1ede2; --c-dmuted: #bccabd; --c-daccent: #c5dbb9; --c-dbrass: #d9bf85; --c-accent: var(--c-mid); --c-dtext: #f1ede2; --c-dmuted: #bccabd; --c-daccent: #c5dbb9; --c-dbrass: #d9bf85; --c-accent: var(--c-mid); --c-dtext: #f1ede2; --c-dmuted: #bccabd; --c-daccent: #c5dbb9; --c-dbrass: #d9bf85; --c-accent: var(--c-mid); --c-dtext: #f1ede2; --c-dmuted: #bccabd; --c-daccent: #c5dbb9; --c-dbrass: #d9bf85; --c-accent: var(--c-mid); --c-dtext: #f1ede2; --c-dmuted: #bccabd; --c-daccent: #c5dbb9; --c-dbrass: #d9bf85;
   }
-  .on-dark { --ink: #f1ede2; --muted: #bccabd; --card: rgba(244,240,230,.07); --line: rgba(241,237,226,.17); }
+  .on-dark { --ink: var(--c-dtext); --muted: var(--c-dmuted); --card: rgba(244,240,230,.07); --line: rgba(241,237,226,.17); }
 
   html, body { margin: 0; padding: 0; background: var(--bg); color: var(--ink); font-family: 'Montserrat', 'Inter', system-ui, -apple-system, sans-serif; }
   body { overscroll-behavior: none; }
@@ -49,13 +49,13 @@
   .ink { color: var(--ink); }
   .muted { color: var(--muted); }
   .brass { color: var(--brassdark); }
-  .on-dark .brass { color: #d9bf85; }
-  .accent-text { color: var(--green2); font-weight: 300; }
-  .on-dark .accent-text { color: #c5dbb9; }
+  .on-dark .brass { color: var(--c-dbrass); }
+  .accent-text { color: var(--c-accent); font-weight: 300; }
+  .on-dark .accent-text { color: var(--c-daccent); }
 
   .eyebrow { display: inline-flex; align-items: center; gap: 10px; font-size: 11px; letter-spacing: .2em; text-transform: uppercase; font-weight: 700; color: var(--brassdark); }
   .eyebrow::before { content: ''; width: 28px; height: 1px; background: linear-gradient(90deg, transparent, currentColor); }
-  .on-dark .eyebrow { color: #d9bf85; }
+  .on-dark .eyebrow { color: var(--c-dbrass); }
 
   /* Botones */
   .btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; padding: 12px 24px; border-radius: 6px; font-size: 13px; font-weight: 700; letter-spacing: .03em; transition: all .25s ease; white-space: nowrap; }
@@ -88,7 +88,7 @@
   .band-bg2 { background: var(--bg2); border-block: 1px solid var(--line); }
   .band-green { background: radial-gradient(70% 120% at 0% 0%, rgba(143,168,143,.24), transparent 60%), radial-gradient(50% 90% at 100% 100%, rgba(169,138,77,.18), transparent 60%), linear-gradient(180deg, var(--c-band1), var(--c-band2)); }
   .hairline { height: 1px; background: linear-gradient(90deg, transparent, rgba(217,191,133,.6), transparent); }
-  .hero-wash { background: linear-gradient(90deg, rgba(16,35,26,.84) 0%, rgba(16,35,26,.5) 45%, rgba(16,35,26,.12) 100%), radial-gradient(50% 70% at 100% 0%, rgba(169,138,77,.22), transparent 60%); }
+  .hero-wash { background: linear-gradient(90deg, color-mix(in srgb, var(--c-dark) 84%, transparent) 0%, color-mix(in srgb, var(--c-dark) 50%, transparent) 45%, color-mix(in srgb, var(--c-dark) 12%, transparent) 100%), radial-gradient(50% 70% at 100% 0%, rgba(169,138,77,.22), transparent 60%); }
   .cta-banner { border-radius: 16px; border: 1px solid rgba(217,191,133,.42); box-shadow: 0 26px 64px -26px rgba(16,35,26,.8);
                 background: radial-gradient(60% 130% at 100% 0%, rgba(169,138,77,.3), transparent 60%), linear-gradient(135deg, var(--c-cta) 0%, var(--c-main) 55%, var(--c-dark) 100%); }
 
@@ -203,10 +203,10 @@
     <div class="max-w-3xl space-y-5">
       <div class="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full backdrop-blur-md" style="border:1px solid rgba(217,191,133,.5);background:rgba(16,35,26,.5)">
         <span class="w-1.5 h-1.5 rounded-full" style="background:#d9bf85"></span>
-        <span id="hero-badge" class="text-[11px] tracking-[0.14em] uppercase font-bold" style="color:#ecd9a8"></span>
+        <span id="hero-badge" class="text-[11px] tracking-[0.14em] uppercase font-bold" style="style="color:var(--c-dtext);opacity:.9""></span>
       </div>
       <h1 id="hero-title" class="ink font-sans text-4xl sm:text-5xl leading-[1.08] font-bold tracking-tight" data-setting="hero_title"></h1>
-      <p id="hero-sub" class="text-base sm:text-lg leading-relaxed max-w-2xl" style="color:#e3ded0"></p>
+      <p id="hero-sub" class="text-base sm:text-lg leading-relaxed max-w-2xl" style="color:var(--c-dtext);opacity:.9"></p>
       <div id="hero-ctas" class="pt-2 flex flex-wrap items-center gap-3.5 hidden">
         <a class="btn btn-bone" href="#/animales"><span class="material-symbols-outlined text-[17px] font-light">pets</span>Ver mis animales</a>
         <a class="btn btn-outline-light" href="#/contacto"><span class="material-symbols-outlined text-[17px] font-light" style="color:#d9bf85">calendar_month</span>Coordinar una visita</a>
@@ -637,7 +637,7 @@ function renderStatic() {
       <div class="absolute inset-x-0 bottom-0 p-6 space-y-2">
         <h3 class="font-sans ${c.big ? 'text-2xl sm:text-3xl' : 'text-xl'} font-bold" style="color:#f4f0e6">${c.t}</h3>
         <p class="text-[13px] max-w-md leading-relaxed" style="color:#d6d9cb">${c.d}</p>
-        <span class="inline-flex items-center gap-1.5 text-[12px] font-semibold pt-1" style="color:#ecd9a8">${c.cta}<span class="material-symbols-outlined text-[16px] group-hover:translate-x-1 transition-transform" style="color:#d9bf85">arrow_forward</span></span>
+        <span class="inline-flex items-center gap-1.5 text-[12px] font-semibold pt-1" style="style="color:var(--c-dtext);opacity:.9"">${c.cta}<span class="material-symbols-outlined text-[16px] group-hover:translate-x-1 transition-transform" style="color:#d9bf85">arrow_forward</span></span>
       </div>
     </a>`).join('');
 
@@ -1011,6 +1011,12 @@ async function cargarDatosDesdeSupabase() {
     $('#hero-sub').textContent = p.sub;
     $('#hero-bg').style.backgroundImage = p.bg ? `url('${p.bg}')` : 'none';
   }
+
+  ['ink', 'muted', 'accent', 'brass', 'dtext', 'dmuted', 'daccent', 'dbrass'].forEach(k => {
+    if (cfg['color_' + k]) document.documentElement.style.setProperty('--c-' + k, cfg['color_' + k]);
+  });
+
+
   
   if (cfg.about_title) ABOUT.titulo = cfg.about_title;
   if (cfg.about_text) ABOUT.texto = cfg.about_text;
@@ -1193,7 +1199,7 @@ async function cargarDatosDesdeSupabase() {
     byId('ed-rs').onclick = () => restaurar([h.k]);
   }
 
-  const COLS = [['main', 'Color principal'], ['mid', 'Color secundario'], ['light', 'Color claro (botones)'], ['dark', 'Fondo oscuro (portada y pie)'], ['band1', 'Banda de color, arriba'], ['band2', 'Banda de color, abajo'], ['cta', 'Banner de consulta'], ['bg', 'Fondo de la web (hueso)'], ['bg2', 'Fondo de las bandas (hueso oscuro)'], ['card', 'Fondo de tarjetas'], ['line', 'Bordes y líneas']];
+  const COLS = [['ink', 'Títulos y textos oscuros'], ['muted', 'Párrafos'], ['accent', 'Parte destacada de los títulos'], ['brass', 'Etiquetas pequeñas (dorado)'], ['dtext', 'Títulos sobre fondo oscuro (portada y pie)'], ['dmuted', 'Párrafos sobre fondo oscuro'], ['daccent', 'Parte destacada sobre fondo oscuro'], ['dbrass', 'Etiquetas doradas sobre fondo oscuro'], ['main', 'Color principal'], ['mid', 'Color secundario'], ['light', 'Color claro (botones)'], ['dark', 'Fondo oscuro (portada y pie)'], ['band1', 'Banda de color, arriba'], ['band2', 'Banda de color, abajo'], ['cta', 'Banner de consulta'], ['bg', 'Fondo de la web (hueso)'], ['bg2', 'Fondo de las bandas (hueso oscuro)'], ['card', 'Fondo de tarjetas'], ['line', 'Bordes y líneas']];
   byId('ed-col').onclick = () => {
     const cs = getComputedStyle(document.documentElement);
     const p = document.createElement('div'); p.id = 'ed-pop';
