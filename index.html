@@ -657,9 +657,9 @@ function renderStatic() {
     </figure>`).join('');
 
   // Animales: resumen
-  const n = e => ANIMALES.filter(a => a.estado === e).length;
+  const n = e => VIS().filter(a => a.estado === e).length;
   const stats = [
-    ['Fichas publicadas', ANIMALES.length, '#1d2a22', 'inventory_2'],
+    ['Fichas publicadas', VIS().length, '#1d2a22', 'inventory_2'],
     ['Disponibles', n('Disponible'), '#2b5a3f', 'check_circle'],
     ['Reservados', n('Reservado'), '#8a6f36', 'bookmark'],
     ['Plantel (no se vende)', n('Plantel'), '#6a4a38', 'favorite']
@@ -728,8 +728,10 @@ function renderStatic() {
 }
 
 /* ---------- Animales: filtros, tarjetas y ficha ---------- */
-const catState = { value: 'todos' }, estadoState = { value: 'todos' };
-const filtrados = () => ANIMALES.map((a, i) => ({ a, i })).filter(({ a }) =>
+const catState = { value: 'todos' }, estadoState = { value: 'todos' }; 
+  let ACTIVAS = null, CATS_ALL = [];
+  const VIS = () => ANIMALES.filter(a => !ACTIVAS || ACTIVAS.has(a.c));
+const filtrados = () => ANIMALES.map((a, i) => ({ a, i })).filter(({ a }) => (!ACTIVAS || ACTIVAS.has(a.c)) &&
   (catState.value === 'todos' || a.c === catState.value) && (estadoState.value === 'todos' || a.estado === estadoState.value));
 
 function renderAnimales() {
@@ -759,7 +761,7 @@ function renderAnimales() {
 }
 
 function renderLotes() {
-  const lista = LOTES.filter(l => catState.value === 'todos' || l[1] === catState.value)
+  const lista = LOTES.filter(l => !ACTIVAS || ACTIVAS.has(l[1])).filter(l => catState.value === 'todos' || l[1] === catState.value)
                      .filter(l => estadoState.value === 'todos' || l[6] === estadoState.value);
   $('#lotes-body').innerHTML = lista.length ? lista.map((l, i) => `
     <tr class="transition-colors hover:bg-[var(--c-mid)]/[0.06]" style="${i < lista.length - 1 ? 'border-bottom:1px solid var(--line)' : ''}">
@@ -1019,7 +1021,21 @@ async function cargarDatosDesdeSupabase() {
     if (cfg['color_' + k]) document.documentElement.style.setProperty('--c-' + k, cfg['color_' + k]);
   });
 
-
+  {
+    const [cr, sc] = await Promise.all([_from('categories').select('*').order('sort_order'), supabaseClient.from('site_categories').select('category_id')]);
+    if (!cr.error && !sc.error) {
+      const on = new Set((sc.data || []).map(r => r.category_id));
+      ACTIVAS = on;
+      CATS_ALL = cr.data || [];
+      CAT_FILTROS.length = 0;
+      CAT_FILTROS.push(['todos', 'Todas']);
+      CATS_ALL.filter(c => on.has(c.id)).forEach(c => CAT_FILTROS.push([c.id, c.label]));
+      const selI = document.getElementById('interes');
+      if (selI) selI.innerHTML = CATS_ALL.filter(c => on.has(c.id)).map(c => `<option>${c.label}</option>`).join('') + '<option>Coordinar una visita</option><option>Otra consulta</option>';
+      if (!on.has(catState.value)) catState.value = 'todos';
+      chips(document.querySelector('#f-cat'), CAT_FILTROS, catState, renderAnimales);
+    }
+  }
   
   if (cfg.about_title) ABOUT.titulo = cfg.about_title;
   if (cfg.about_text) ABOUT.texto = cfg.about_text;
