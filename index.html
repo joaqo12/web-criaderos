@@ -1203,7 +1203,7 @@ async function cargarDatosDesdeSupabase() {
   byId('ed-col').onclick = () => {
     const cs = getComputedStyle(document.documentElement);
     const p = document.createElement('div'); p.id = 'ed-pop';
-    p.innerHTML = `<div class="in"><h3>Colores de la web</h3>${COLS.map(([k, l]) => `<label>${l}<input type="color" id="ed-c-${k}" value="${cs.getPropertyValue('--c-' + k).trim()}" style="height:40px;padding:2px"/></label>`).join('')}<div class="msg" id="ed-msg"></div><div class="row"><button class="p" id="ed-ok" type="button">Guardar</button><button id="ed-no" type="button">Cancelar</button><button id="ed-rs" type="button">Volver a los originales</button></div></div>`;
+    p.innerHTML = `<div class="in"><h3>Colores de la web</h3>${COLS.map(([k, l]) => (k === 'ink' ? '<h4 style="margin:6px 0 0;font-size:13px;border-bottom:1px solid #dcd5c3;padding-bottom:4px">Colores de los textos</h4>' : k === 'main' ? '<h4 style="margin:22px 0 0;font-size:13px;border-bottom:1px solid #dcd5c3;padding-bottom:4px">Colores de la página</h4>' : '') + `<label>${l}<input type="color" id="ed-c-${k}" value="${cs.getPropertyValue('--c-' + k).trim()}" style="height:40px;padding:2px"/></label>`).join('')}<div class="msg" id="ed-msg"></div><div class="row"><button class="p" id="ed-ok" type="button">Guardar</button><button id="ed-no" type="button">Cancelar</button><button id="ed-rs" type="button">Volver a los originales</button></div></div>`;
     document.body.appendChild(p);
     byId('ed-no').onclick = cerrar;
     byId('ed-rs').onclick = () => restaurar(COLS.map(([k]) => 'color_' + k));
