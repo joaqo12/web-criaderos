@@ -1293,7 +1293,7 @@ async function cargarDatosDesdeSupabase() {
     p.innerHTML = `<div class="in" style="max-width:560px"><h3>${a ? 'Editar animal' : 'Nuevo animal'}</h3>
       <div class="g2">
         <label>Nombre<input id="an-name" value="${E(a?.name || '')}"/></label>
-        <label>Categoría${sel('an-cat', CATS, a?.category)}</label>
+        <label>Categoría${selCat('an-cat', a?.category)}</label>
         <label>Etiqueta (ej: Toro)<input id="an-tag" value="${E(a?.tag || '')}"/></label>
         <label>Raza<input id="an-breed" value="${E(a?.breed || '')}"/></label>
         <label>RP o lote<input id="an-rp" value="${E(a?.rp || '')}"/></label>
@@ -1342,7 +1342,7 @@ async function cargarDatosDesdeSupabase() {
         tags: byId('an-tags').value.split(',').map(x => x.trim()).filter(Boolean),
         attributes: attrs, main_image_url: AF[0], gallery_urls: [AF[1], AF[2]]
       };
-      if (!row.name) { msg.textContent = 'Poné un nombre.'; return; }
+      if (!row.name) { msg.textContent = 'Poné un nombre.'; return; } if (!row.category) { msg.textContent = 'Primero prendé una categoría con el botón Categorías.'; return; }
       msg.textContent = 'Guardando...';
       const { error } = id ? await supabaseClient.from('animals').update(row).eq('id', id).eq('site_id', SITE) : await supabaseClient.from('animals').insert(row);
       if (error) { msg.textContent = 'Error: ' + error.message; return; }
@@ -1363,7 +1363,7 @@ async function cargarDatosDesdeSupabase() {
     p.innerHTML = `<div class="in" style="max-width:520px"><h3>${l ? 'Editar lote' : 'Nuevo lote'}</h3>
       <div class="g2">
         <label>Código (ej: L-01)<input id="lo-code" value="${E(l?.lot_code || '')}"/></label>
-        <label>Categoría${sel('lo-cat', CATS, l?.category)}</label>
+        <label>Categoría${selCat('lo-cat', l?.category)}</label>
         <label>Descripción<input id="lo-desc" value="${E(l?.description || '')}"/></label>
         <label>Raza<input id="lo-breed" value="${E(l?.breed || '')}"/></label>
         <label>Cantidad<input id="lo-qty" type="number" min="0" value="${E(l?.quantity ?? '')}"/></label>
@@ -1381,7 +1381,7 @@ async function cargarDatosDesdeSupabase() {
         description: byId('lo-desc').value.trim(), breed: byId('lo-breed').value.trim(),
         quantity: parseInt(byId('lo-qty').value) || 0, average_weight: byId('lo-weight').value.trim(), status: byId('lo-status').value
       };
-      if (!row.lot_code) { msg.textContent = 'Poné un código.'; return; }
+      if (!row.lot_code) { msg.textContent = 'Poné un código.'; return; } if (!row.category) { msg.textContent = 'Primero prendé una categoría con el botón Categorías.'; return; }
       msg.textContent = 'Guardando...';
       const { error } = l ? await supabaseClient.from('lots').update(row).eq('id', l.id).eq('site_id', SITE) : await supabaseClient.from('lots').insert(row);
       if (error) { msg.textContent = 'Error: ' + error.message; return; }
@@ -1663,6 +1663,65 @@ async function cargarDatosDesdeSupabase() {
     add(k + '_img', 'Foto de portada', 'img', () => aca() && byId('hero'), { noLinks: true });
   });
 
+  /* ===== CATEGORÍAS EN EL EDITOR ===== */
+  const st6 = document.createElement('style');
+  st6.textContent = `#ed-bar{flex-wrap:wrap;justify-content:center;max-width:94vw;border-radius:16px}
+  #ed-pop .ctz{min-height:50px;border:2px dashed #d3ccb8;border-radius:10px;padding:8px;margin-top:6px;display:flex;flex-wrap:wrap;gap:6px;align-content:flex-start}
+  #ed-pop .ctc{padding:6px 10px;border-radius:999px;border:1px solid #1f3a2b;background:#fff;color:#1f3a2b;font-weight:700;font-size:12px;cursor:pointer}
+  #ed-pop #ct-on .ctc{background:#1f3a2b;color:#fff}
+  #ed-pop .ctg{width:100%;font-size:10px;font-weight:700;color:#5d6b61;text-transform:uppercase;letter-spacing:.08em}`;
+  document.head.appendChild(st6);
+
+  const selCat = (id, v) => {
+    const base = CATS_ALL.length ? CATS_ALL : CATS.map(c => ({ id: c, label: c }));
+    let l = base.filter(c => !ACTIVAS || ACTIVAS.has(c.id));
+    if (v && !l.some(c => c.id === v)) l = l.concat([base.find(c => c.id === v) || { id: v, label: v }]);
+    return `<select id="${id}">${l.map(c => `<option value="${E(c.id)}"${c.id === v ? ' selected' : ''}>${E(c.label)}${(ACTIVAS && !ACTIVAS.has(c.id)) ? ' (sin usar)' : ''}</option>`).join('')}</select>`;
+  };
+
+  bar.insertAdjacentHTML('beforeend', '<button id="ed-cat" type="button">Categorías</button>');
+  byId('ed-cat').onclick = () => {
+    cerrar();
+    let cambio = false;
+    const p = document.createElement('div'); p.id = 'ed-pop';
+    p.innerHTML = `<div class="in" style="max-width:560px"><h3>Categorías</h3>
+      <p style="margin:0 0 8px;font-size:13px">Tocá una categoría para pasarla de un lado al otro. Solo las que están en uso aparecen en tu web y al crear animales.</p>
+      <div class="g2"><div><b style="font-size:12px">En uso</b><div id="ct-on" class="ctz"></div></div><div><b style="font-size:12px">Sin usar</b><div id="ct-off" class="ctz"></div></div></div>
+      <div class="msg" id="ed-msg"></div>
+      <div class="row"><button class="p" id="ed-no" type="button">Listo</button></div></div>`;
+    document.body.appendChild(p);
+    if (!ACTIVAS || !CATS_ALL.length) { byId('ed-msg').textContent = 'No se pudieron cargar las categorías.'; byId('ed-no').onclick = cerrar; return; }
+    const pintar = () => {
+      const zona = (id, on) => {
+        let g = null, h = '';
+        CATS_ALL.filter(c => ACTIVAS.has(c.id) === on).forEach(c => {
+          if (c.grupo !== g) { g = c.grupo; h += `<div class="ctg">${E(g)}</div>`; }
+          h += `<button type="button" class="ctc" data-c="${E(c.id)}">${E(c.label)}</button>`;
+        });
+        byId(id).innerHTML = h || '<small>(vacío)</small>';
+      };
+      zona('ct-on', true); zona('ct-off', false);
+    };
+    pintar();
+    byId('ed-no').onclick = () => cambio ? recargar() : cerrar();
+    p.addEventListener('click', async e => {
+      const b = e.target.closest('[data-c]'); if (!b) return;
+      const id = b.dataset.c, enc = !ACTIVAS.has(id), msg = byId('ed-msg');
+      msg.textContent = '';
+      if (!enc) {
+        const na = ANIMALES.filter(a => a.c === id).length, nl = LOTES.filter(l => l[1] === id).length;
+        if ((na || nl) && !confirm(`Hay ${na} animales y ${nl} lotes en esta categoría que dejarán de verse en tu web. No se borran, y vuelven a verse cuando la prendas de nuevo. ¿Apagarla?`)) return;
+      }
+      const { error } = enc
+        ? await supabaseClient.from('site_categories').insert({ site_id: SITE, category_id: id })
+        : await supabaseClient.from('site_categories').delete().eq('site_id', SITE).eq('category_id', id);
+      if (error) { msg.textContent = 'Error: ' + error.message; return; }
+      if (enc) ACTIVAS.add(id); else ACTIVAS.delete(id);
+      cambio = true;
+      pintar();
+    });
+  };
+  
   
   const y = sessionStorage.getItem('edY');
   if (y) { sessionStorage.removeItem('edY'); setTimeout(() => window.scrollTo(0, +y), 1500); }
