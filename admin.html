@@ -203,7 +203,7 @@ async function iniciar() {
   const { data: { session } } = await sb.auth.getSession();
   if (!session) { $('#login').classList.remove('hidden'); $('#app').classList.add('hidden'); return; }
 
-  const { data: asign } = await sb.from('site_users').select('site_id, sites(name)');
+  let asign;   const qsSite = new URLSearchParams(location.search).get('site');   if (qsSite) {     const { data: adm } = await sb.from('admins').select('user_id');     if (adm && adm.length) {       const { data: st } = await sb.from('sites').select('id, name').eq('id', qsSite).maybeSingle();       if (st) asign = [{ site_id: st.id, sites: { name: st.name } }];     }   }   if (!asign) { const r = await sb.from('site_users').select('site_id, sites(name)').eq('user_id', session.user.id); asign = r.data; }
   if (!asign || !asign.length) {
     $('#login').classList.remove('hidden'); $('#app').classList.add('hidden');
     $('#err').textContent = 'Este usuario no tiene ninguna cabaña asignada.';
