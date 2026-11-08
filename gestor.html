@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Gestor de clientes</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+  body { margin: 0; font-family: system-ui, sans-serif; background: #f4f0e6; color: #1d2a22; }
+  .box { max-width: 380px; margin: 12vh auto; background: #fbf9f3; border: 1px solid #dcd5c3; border-radius: 12px; padding: 28px; }
+  .wrap { max-width: 960px; margin: 24px auto; padding: 0 16px; }
+  h1 { font-size: 20px; margin: 0; }
+  label { display: block; font-size: 12px; font-weight: 700; margin-top: 12px; }
+  input, textarea { width: 100%; box-sizing: border-box; margin-top: 6px; padding: 10px 12px; border: 1px solid #d3ccb8; border-radius: 8px; font: 14px system-ui; }
+  button { margin-top: 12px; padding: 9px 16px; border: 0; border-radius: 8px; background: #1f3a2b; color: #f4f0e6; font-weight: 700; cursor: pointer; }
+  button.sec { background: #fff; color: #1f3a2b; border: 1px solid #1f3a2b; }
+  button.rojo { background: #fff; color: #a33; border: 1px solid #a33; }
+  .top { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; }
+  .card { background: #fbf9f3; border: 1px solid #dcd5c3; border-radius: 12px; padding: 16px; margin-top: 14px; }
+  .card.off { border-color: #a33; background: #fdf3f3; }
+  .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .pill { display: inline-block; padding: 2px 10px; border-radius: 999px; font-size: 11px; font-weight: 700; }
+  .p-on { background: #e1ecd9; color: #2b5a3f; }
+  .p-off { background: #f6d9d9; color: #a33; }
+  .err { color: #a33; font-size: 13px; min-height: 16px; margin-top: 8px; }
+  .hidden { display: none; }
+  small { color: #5d6b61; }
+  a { color: #1f3a2b; }
+  @media (max-width: 600px) { .grid2 { grid-template-columns: 1fr; } }
+</style>
+</head>
+<body>
+
+<div id="login" class="box hidden">
+  <h1>Gestor de clientes</h1>
+  <form id="f-login">
+    <label>Email<input id="email" type="email" required autocomplete="username"/></label>
+    <label>Contraseña<input id="pass" type="password" required autocomplete="current-password"/></label>
+    <button type="submit">Entrar</button>
+    <div id="err" class="err"></div>
+  </form>
+</div>
+
+<div id="app" class="wrap hidden">
+  <div class="top">
+    <div><h1>Gestor de clientes</h1><small id="resumen"></small></div>
+    <button id="salir" class="sec">Cerrar sesión</button>
+  </div>
+  <label>Buscar<input id="buscar" placeholder="Nombre o código"/></label>
+  <div id="msg" class="err"></div>
+  <div id="lista"></div>
+</div>
+
+<script>
+const SUPABASE_URL = 'https://wavxivsalphthkmekzla.supabase.co';
+const SUPABASE_KEY = 'sb_publishable_Ugsbe8guq0pJFWiGiarZZQ__6JVV-Ix';
+const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+const $ = s => document.querySelector(s);
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+let SITIOS = [];
+
+async function iniciar() {
+  const { data: { session } } = await sb.auth.getSession();
+  if (!session) { $('#login').classList.remove('hidden'); $('#app').classList.add('hidden'); return; }
+  const { data: adm } = await sb.from('admins').select('user_id');
+  if (!adm || !adm.length) {
+    $('#login').classList.remove('hidden'); $('#app').classList.add('hidden');
+    $('#err').textContent = 'Este usuario no es administrador.';
+    await sb.auth.signOut();
+    return;
+  }
+  $('#login').classList.add('hidden'); $('#app').classList.remove('hidden');
+  cargar();
+}
+
+async function cargar() {
+  const [s, a, n, u] = await Promise.all([
+    sb.from('sites').select('*').order('created_at', { ascending: false }),
+    sb.from('animals').select('site_id'),
+    sb.from('site_admin').select('*'),
+    sb.from('site_users').select('site_id')
+  ]);
+  const err = s.error || a.error || n.error || u.error;
+  if (err) { $('#msg').textContent = err.message; return; }
+  const na = {}, nu = {}, ad = {};
+  a.data.forEach(r => na[r.site_id] = (na[r.site_id] || 0) + 1);
+  u.data.forEach(r => nu[r.site_id] = (nu[r.site_id] || 0) + 1);
+  n.data.forEach(r => ad[r.site_id] = r);
+  SITIOS = s.data.map(x => ({ ...x, animales: na[x.id] || 0, usuarios: nu[x.id] || 0, plan: (ad[x.id] && ad[x.id].plan) || '', notas: (ad[x.id] && ad[x.id].notes) || '' }));
+  pintar();
+}
+
+function pintar() {
+  const q = $('#buscar').value.trim().toLowerCase();
+  const l = SITIOS.filter(x => !q || (x.name + ' ' + x.id).toLowerCase().includes(q));
+  $('#resumen').textContent = SITIOS.length + ' clientes · ' + SITIOS.filter(x => x.active).length + ' activos';
+  $('#lista').innerHTML = l.map(x => `
+    <div class="card ${x.active ? '' : 'off'}" data-id="${esc(x.id)}">
+      <div class="top">
+        <div><b>${esc(x.name)}</b> <small>(${esc(x.id)})</small></div>
+        <span class="pill ${x.active ? 'p-on' : 'p-off'}">${x.active ? 'Activo' : 'Suspendido'}</span>
+      </div>
+      <p style="margin:8px 0"><small>Alta: ${new Date(x.created_at).toLocaleDateString('es-AR')} · ${x.animales} animales · ${x.usuarios} usuarios</small></p>
+      <p style="margin:8px 0">
+        <a href="/?c=${encodeURIComponent(x.id)}" target="_blank" rel="noopener">Ver su web</a>
+      </p>
+      <div class="grid2">
+        <label>Plan o precio<input data-f="plan" value="${esc(x.plan)}" placeholder="Ej: básico, 15000 por mes"/></label>
+        <label>Notas<textarea data-f="notas" rows="2" placeholder="Qué pidió, cuándo paga...">${esc(x.notas)}</textarea></label>
+      </div>
+      <button data-guardar="1">Guardar plan y notas</button>
+      <button data-toggle="1" class="${x.active ? 'rojo' : 'sec'}">${x.active ? 'Suspender' : 'Reactivar'}</button>
+    </div>`).join('') || '<p>No hay clientes.</p>';
+}
+
+$('#buscar').addEventListener('input', pintar);
+
+$('#lista').addEventListener('click', async e => {
+  const card = e.target.closest('.card'); if (!card) return;
+  const id = card.dataset.id, msg = $('#msg');
+  msg.textContent = '';
+  if (e.target.dataset.guardar) {
+    const { error } = await sb.from('site_admin').upsert(
+      { site_id: id, plan: card.querySelector('[data-f=plan]').value.trim(), notes: card.querySelector('[data-f=notas]').value.trim() },
+      { onConflict: 'site_id' });
+    msg.textContent = error ? 'Error: ' + error.message : 'Guardado.';
+    if (!error) cargar();
+  }
+  if (e.target.dataset.toggle) {
+    const x = SITIOS.find(s => s.id === id);
+    if (x.active && !confirm('¿Suspender a ' + x.name + '? Su web va a mostrar un aviso de fuera de servicio. No se borra nada.')) return;
+    const { error } = await sb.from('sites').update({ active: !x.active }).eq('id', id);
+    if (error) { msg.textContent = 'Error: ' + error.message; return; }
+    cargar();
+  }
+});
+
+$('#f-login').addEventListener('submit', async e => {
+  e.preventDefault();
+  $('#err').textContent = '';
+  const { error } = await sb.auth.signInWithPassword({ email: $('#email').value.trim(), password: $('#pass').value });
+  if (error) { $('#err').textContent = 'Email o contraseña incorrectos.'; return; }
+  iniciar();
+});
+$('#salir').addEventListener('click', async () => { await sb.auth.signOut(); location.reload(); });
+
+iniciar();
+</script>
+</body>
+</html>
