@@ -48,7 +48,7 @@
   </div>
   <label>Buscar<input id="buscar" placeholder="Nombre o código"/></label>
   <div id="msg" class="err"></div>
-  <div id="lista"></div>
+  <div class="card">     <button id="n-toggle" class="sec" type="button">+ Nuevo cliente</button>     <div id="n-form" class="hidden">       <div class="grid2">         <label>Nombre de la cabaña<input id="n-name" placeholder="Cabaña La Esperanza"/></label>         <label>Código (para el enlace)<input id="n-id" placeholder="la-esperanza"/></label>         <label>Email del cliente<input id="n-email" type="email"/></label>         <label>Contraseña inicial<input id="n-pass"/></label>       </div>       <button id="n-gen" class="sec" type="button">Generar contraseña</button>       <button id="n-crear" type="button">Crear cliente</button>     </div>     <div id="n-out" style="margin-top:10px;font-size:13px"></div>   </div>   <div id="lista"></div>
 </div>
 
 <script>
@@ -57,7 +57,7 @@ const SUPABASE_KEY = 'sb_publishable_Ugsbe8guq0pJFWiGiarZZQ__6JVV-Ix';
 const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 const $ = s => document.querySelector(s);
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
-let SITIOS = [];
+let SITIOS = [], USUARIOS = {}; async function api(body) {   const { data, error } = await sb.functions.invoke('gestor', { body });   if (error) {     let m = error.message;     try { const j = await error.context.json(); if (j.error) m = j.error; } catch (_) {}     throw new Error(m);   }   return data; }
 
 async function iniciar() {
   const { data: { session } } = await sb.auth.getSession();
@@ -73,7 +73,7 @@ async function iniciar() {
   cargar();
 }
 
-async function cargar() {
+async function cargar() {   try { USUARIOS = (await api({ action: 'listar' })).usuarios || {}; }   catch (e) { USUARIOS = {}; $('#msg').textContent = 'La función de servidor no respondió: ' + e.message; }
   const [s, a, n, u] = await Promise.all([
     sb.from('sites').select('*').order('created_at', { ascending: false }),
     sb.from('animals').select('site_id'),
@@ -102,7 +102,7 @@ function pintar() {
       </div>
       <p style="margin:8px 0"><small>Alta: ${new Date(x.created_at).toLocaleDateString('es-AR')} · ${x.animales} animales · ${x.usuarios} usuarios</small></p>
       <p style="margin:8px 0">
-        <a href="/?c=${encodeURIComponent(x.id)}" target="_blank" rel="noopener">Ver su web</a>
+        <a href="/?c=${encodeURIComponent(x.id)}" target="_blank" rel="noopener">Ver su web</a> ·         <a href="/admin.html?site=${encodeURIComponent(x.id)}" target="_blank" rel="noopener">Entrar a su panel</a>       </p>       <p style="margin:8px 0"><small>Usuarios:</small>         ${(USUARIOS[x.id] || []).map(u => `<span style="display:inline-block;margin:4px 6px 0 0">${esc(u.email)} <button class="sec" data-pw="${esc(u.user_id)}" style="margin:0;padding:3px 8px;font-size:12px">Cambiar contraseña</button></span>`).join('') || '<small>(ninguno)</small>'}
       </p>
       <div class="grid2">
         <label>Plan o precio<input data-f="plan" value="${esc(x.plan)}" placeholder="Ej: básico, 15000 por mes"/></label>
@@ -113,13 +113,40 @@ function pintar() {
     </div>`).join('') || '<p>No hay clientes.</p>';
 }
 
+
+$('#n-toggle').onclick = () => $('#n-form').classList.toggle('hidden');
+$('#n-name').addEventListener('input', () => {
+  if (!$('#n-id').dataset.manual) $('#n-id').value = $('#n-name').value.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '').slice(0, 40);
+});
+$('#n-id').addEventListener('input', () => { $('#n-id').dataset.manual = '1'; });
+$('#n-gen').onclick = () => {
+  const c = 'abcdefghijkmnpqrstuvwxyzABCDEFGHJKLMNPQRSTUVWXYZ23456789'; let p = '';
+  for (let i = 0; i < 10; i++) p += c[Math.floor(Math.random() * c.length)];
+  $('#n-pass').value = p;
+};
+$('#n-crear').onclick = async () => {
+  const out = $('#n-out');
+  const body = { action: 'crear', name: $('#n-name').value.trim(), id: $('#n-id').value.trim(), email: $('#n-email').value.trim(), password: $('#n-pass').value };
+  if (!body.name || !body.id || !body.email || !body.password) { out.style.color = '#a33'; out.textContent = 'Completá todos los campos.'; return; }
+  out.style.color = '#1d2a22'; out.textContent = 'Creando...';
+  try {
+    await api(body);
+    out.innerHTML = '<b>Cliente creado.</b> Mensaje para enviarle:<div style="margin-top:6px;background:#fff;border:1px solid #dcd5c3;border-radius:8px;padding:10px">Tu web: ' + esc(location.origin + '/?c=' + body.id) + '<br>Tu panel: ' + esc(location.origin + '/admin.html') + '<br>Usuario: ' + esc(body.email) + '<br>Contraseña: ' + esc(body.password) + '</div>';
+    ['#n-name', '#n-id', '#n-email', '#n-pass'].forEach(s => { $(s).value = ''; });
+    delete $('#n-id').dataset.manual;
+    cargar();
+  } catch (err) { out.style.color = '#a33'; out.textContent = 'Error: ' + err.message; }
+};
+
+
+  
 $('#buscar').addEventListener('input', pintar);
 
 $('#lista').addEventListener('click', async e => {
   const card = e.target.closest('.card'); if (!card) return;
   const id = card.dataset.id, msg = $('#msg');
   msg.textContent = '';
-  if (e.target.dataset.guardar) {
+  if (e.target.dataset.pw) {     const pw = prompt('Nueva contraseña (mínimo 8 caracteres):');     if (!pw) return;     try { await api({ action: 'password', user_id: e.target.dataset.pw, password: pw }); msg.textContent = 'Contraseña cambiada. La nueva es: ' + pw; }     catch (err) { msg.textContent = 'Error: ' + err.message; }     return;   }   if (e.target.dataset.guardar) {
     const { error } = await sb.from('site_admin').upsert(
       { site_id: id, plan: card.querySelector('[data-f=plan]').value.trim(), notes: card.querySelector('[data-f=notas]').value.trim() },
       { onConflict: 'site_id' });
