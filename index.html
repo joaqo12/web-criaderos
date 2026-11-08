@@ -1219,7 +1219,7 @@ async function cargarDatosDesdeSupabase() {
   }
 
   const COLS = [['ink', 'Títulos y textos oscuros'], ['muted', 'Párrafos'], ['accent', 'Parte destacada de los títulos'], ['brass', 'Etiquetas pequeñas (dorado)'], ['dtext', 'Títulos sobre fondo oscuro (portada y pie)'], ['dmuted', 'Párrafos sobre fondo oscuro'], ['daccent', 'Parte destacada sobre fondo oscuro'], ['dbrass', 'Etiquetas doradas sobre fondo oscuro'], ['sage', 'Detalle suave (franja de tarjetas)'], ['gold', 'Dorado de detalles (franja y números)'], ['tint', 'Fondo de íconos y etiquetas'], ['tintline', 'Borde de íconos y etiquetas'], ['main', 'Color principal'], ['mid', 'Color secundario'], ['light', 'Color claro (botones)'], ['dark', 'Fondo oscuro (portada y pie)'], ['band1', 'Banda de color, arriba'], ['band2', 'Banda de color, abajo'], ['cta', 'Banner de consulta'], ['bg', 'Fondo de la web (hueso)'], ['bg2', 'Fondo de las bandas (hueso oscuro)'], ['card', 'Fondo de tarjetas'], ['line', 'Bordes y líneas']];
-  byId('ed-col').onclick = () => {
+  const colViejo = () => {
     const cs = getComputedStyle(document.documentElement);
     const p = document.createElement('div'); p.id = 'ed-pop';
     p.innerHTML = `<div class="in"><h3>Colores de la web</h3>${COLS.map(([k, l]) => (k === 'ink' ? '<h4 style="margin:6px 0 0;font-size:13px;border-bottom:1px solid #dcd5c3;padding-bottom:4px">Colores de los textos</h4>' : k === 'main' ? '<h4 style="margin:22px 0 0;font-size:13px;border-bottom:1px solid #dcd5c3;padding-bottom:4px">Colores de la página</h4>' : '') + `<label>${l}<input type="color" id="ed-c-${k}" value="${cs.getPropertyValue('--c-' + k).trim()}" style="height:40px;padding:2px"/></label>`).join('')}<div class="msg" id="ed-msg"></div><div class="row"><button class="p" id="ed-ok" type="button">Guardar</button><button id="ed-no" type="button">Cancelar</button><button id="ed-rs" type="button">Volver a los originales</button></div></div>`;
@@ -1721,6 +1721,99 @@ async function cargarDatosDesdeSupabase() {
       pintar();
     });
   };
+
+
+
+
+  /* ===== COLORES GUIADOS ===== */
+  const ZONAS = {
+    portada: { t: 'Portada y pie de página', k: [['dark', 'Fondo'], ['dtext', 'Títulos'], ['daccent', 'Parte destacada del título'], ['dmuted', 'Párrafos'], ['dbrass', 'Etiqueta pequeña']] },
+    fondo: { t: 'Fondo de la página', k: [['bg', 'Fondo principal'], ['bg2', 'Fondo de las franjas'], ['card', 'Fondo de las tarjetas'], ['line', 'Líneas y bordes']] },
+    textos: { t: 'Textos', k: [['ink', 'Títulos'], ['accent', 'Parte destacada del título'], ['muted', 'Párrafos'], ['brass', 'Etiquetas pequeñas']] },
+    botones: { t: 'Botones', k: [['main', 'Color principal'], ['light', 'Color claro del botón'], ['mid', 'Color secundario (links y detalles)']] },
+    tarjetas: { t: 'Tarjetas e íconos', k: [['sage', 'Franja de arriba (parte suave)'], ['gold', 'Franja de arriba (parte dorada) y números'], ['tint', 'Fondo de íconos y etiquetas'], ['tintline', 'Borde de íconos y etiquetas']] },
+    bandas: { t: 'Bandas de color (Sobre nosotros, condiciones)', k: [['band1', 'Parte de arriba'], ['band2', 'Parte de abajo']] },
+    banner: { t: 'Banner de consulta', k: [['cta', 'Color del banner']] }
+  };
+  const TEMAS = [
+    ['Bosque', { dark: '#14261c', main: '#1f3a2b', mid: '#2f5a42', light: '#3a7355', band1: '#26442f', band2: '#1a3023', cta: '#34674c', accent: '#2f5a42', daccent: '#c5dbb9' }],
+    ['Azul', { dark: '#10222e', main: '#1f3f5b', mid: '#2f6a8f', light: '#3a85b0', band1: '#24465f', band2: '#172f42', cta: '#2d5d7f', accent: '#2f6a8f', daccent: '#bcd6ea' }],
+    ['Bordó', { dark: '#2a1216', main: '#5a1f2b', mid: '#7a2e3d', light: '#9a3d4f', band1: '#4a1a24', band2: '#33121a', cta: '#6e2a38', accent: '#7a2e3d', daccent: '#e8c5cb' }],
+    ['Tierra', { dark: '#2b2015', main: '#5a4226', mid: '#7a5a36', light: '#96704a', band1: '#4a3720', band2: '#33261a', cta: '#6b4f2f', accent: '#7a5a36', daccent: '#e6d3b3' }],
+    ['Pizarra', { dark: '#1b2128', main: '#2f3b48', mid: '#475766', light: '#5f7285', band1: '#35424f', band2: '#232d37', cta: '#3f4f5f', accent: '#475766', daccent: '#c9d4de' }],
+    ['Oliva', { dark: '#232616', main: '#3d4a1f', mid: '#566b2a', light: '#6f8a35', band1: '#3a461f', band2: '#272f14', cta: '#4f6226', accent: '#566b2a', daccent: '#d5e0b5' }]
+  ];
+  const TODAS = [...new Set(Object.values(ZONAS).flatMap(z => z.k.map(x => x[0])))];
+  const cvar = k => getComputedStyle(document.documentElement).getPropertyValue('--c-' + k).trim();
+
+  function colores() {
+    cerrar();
+    const cambios = {};
+    const tarj = '<div class="cmz" data-z="tarjetas" style="flex:1;background:var(--card);border:1px solid var(--line);border-top:3px solid var(--c-gold);border-radius:8px;padding:6px;cursor:pointer"><span style="display:inline-block;width:14px;height:14px;border-radius:4px;background:var(--c-tint);border:1px solid var(--c-tintline);vertical-align:middle"></span> <span style="color:var(--ink)">Tarjeta</span></div>';
+    const mini = `<div style="border:1px solid #dcd5c3;border-radius:10px;overflow:hidden;font:11px system-ui;margin:8px 0">
+      <div class="cmz" data-z="portada" style="background:var(--c-dark);padding:10px;cursor:pointer">
+        <div style="color:var(--c-dbrass);font-size:9px;letter-spacing:.12em">ETIQUETA</div>
+        <div style="color:var(--c-dtext);font-weight:700;font-size:15px;margin:2px 0">Título principal <span style="color:var(--c-daccent);font-weight:300">destacado</span></div>
+        <div style="color:var(--c-dmuted)">Texto de ejemplo debajo del título</div>
+        <span class="cmz" data-z="botones" style="display:inline-block;margin-top:6px;padding:4px 10px;border-radius:6px;background:linear-gradient(135deg,var(--c-light),var(--c-main));color:#f4f0e6;cursor:pointer">Botón</span>
+      </div>
+      <div class="cmz" data-z="fondo" style="background:var(--bg);padding:10px;cursor:pointer">
+        <div class="cmz" data-z="textos" style="cursor:pointer"><b style="color:var(--ink)">Título de sección </b><b style="color:var(--c-accent);font-weight:300">destacado</b><div style="color:var(--muted)">Párrafo de ejemplo.</div></div>
+        <div style="display:flex;gap:8px;margin-top:8px">${tarj}${tarj}</div>
+      </div>
+      <div class="cmz" data-z="bandas" style="background:linear-gradient(180deg,var(--c-band1),var(--c-band2));padding:10px;color:var(--c-dtext);cursor:pointer">Sobre nosotros</div>
+      <div class="cmz" data-z="banner" style="background:linear-gradient(135deg,var(--c-cta),var(--c-main) 55%,var(--c-dark));padding:10px;color:var(--c-dtext);cursor:pointer">Banner de consulta</div>
+      <div class="cmz" data-z="portada" style="background:var(--c-dark);padding:8px;color:var(--c-dmuted);cursor:pointer">Pie de página</div>
+    </div>`;
+    const dots = c => ['dark', 'main', 'light'].map((k, i) => `<i style="display:inline-block;width:14px;height:14px;border-radius:50%;background:${c[k]};margin-left:${i ? -4 : 0}px"></i>`).join('');
+    const p = document.createElement('div'); p.id = 'ed-pop';
+    p.innerHTML = `<div class="in" style="max-width:540px"><h3>Colores de tu web</h3>
+      <b style="font-size:12px">1. Elegí un tema listo</b>
+      <div style="display:flex;flex-wrap:wrap;gap:8px;margin:8px 0">${TEMAS.map(([n, c], i) => `<button type="button" data-t="${i}" style="display:flex;align-items:center;gap:6px;padding:6px 10px"><span>${dots(c)}</span>${n}</button>`).join('')}</div>
+      <b style="font-size:12px">2. Tocá una parte del dibujo para cambiar sus colores</b>
+      ${mini}
+      <div id="co-zona"></div>
+      <div class="msg" id="ed-msg"></div>
+      <div class="row"><button class="p" id="co-ok" type="button">Guardar</button><button id="co-no" type="button">Cancelar</button><button id="co-rs" type="button">Volver a los originales</button><button id="co-av" type="button">Modo avanzado</button></div></div>`;
+    document.body.appendChild(p);
+
+    const zona = z => {
+      const Z = ZONAS[z];
+      const filas = Z.k.filter(([k]) => cvar(k)).map(([k, l]) => `<label style="display:flex;align-items:center;gap:10px;margin-top:8px"><input type="color" data-k="${k}" value="${E(cvar(k))}" style="width:48px;height:36px;padding:2px;margin:0"/><span>${E(l)}</span></label>`).join('');
+      byId('co-zona').innerHTML = `<div style="border:1px solid #dcd5c3;border-radius:8px;padding:10px;margin-top:8px"><b>${E(Z.t)}</b>${filas || '<div><small>Esta parte no tiene colores para cambiar.</small></div>'}</div>`;
+      p.querySelectorAll('.cmz').forEach(el => { el.style.outline = el.dataset.z === z ? '2px solid #d9a441' : ''; el.style.outlineOffset = '-2px'; });
+    };
+    zona('portada');
+
+    p.addEventListener('click', e => {
+      const t = e.target.closest('[data-t]');
+      if (t) {
+        const c = TEMAS[+t.dataset.t][1];
+        Object.entries(c).forEach(([k, v]) => { document.documentElement.style.setProperty('--c-' + k, v); cambios[k] = v; });
+        p.querySelectorAll('input[data-k]').forEach(i => { if (c[i.dataset.k]) i.value = c[i.dataset.k]; });
+        return;
+      }
+      const z = e.target.closest('[data-z]');
+      if (z) zona(z.dataset.z);
+    });
+    p.addEventListener('input', e => {
+      const k = e.target.dataset && e.target.dataset.k; if (!k) return;
+      document.documentElement.style.setProperty('--c-' + k, e.target.value);
+      cambios[k] = e.target.value;
+    });
+    byId('co-ok').onclick = async () => {
+      const rows = Object.entries(cambios).map(([k, v]) => ({ site_id: SITE, key: 'color_' + k, value: v, image_url: null, updated_at: new Date().toISOString() }));
+      if (!rows.length) return cerrar();
+      byId('ed-msg').textContent = 'Guardando...';
+      const { error } = await supabaseClient.from('site_settings').upsert(rows, { onConflict: 'site_id,key' });
+      if (error) { byId('ed-msg').textContent = 'Error: ' + error.message; return; }
+      cerrar();
+    };
+    byId('co-no').onclick = () => Object.keys(cambios).length ? recargar() : cerrar();
+    byId('co-rs').onclick = () => restaurar(TODAS.map(k => 'color_' + k));
+    byId('co-av').onclick = () => { cerrar(); colViejo(); };
+  }
+  byId('ed-col').onclick = colores;
   
   
   const y = sessionStorage.getItem('edY');
