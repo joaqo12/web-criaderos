@@ -442,7 +442,7 @@
     </div>
     <div class="pt-8 flex flex-col sm:flex-row justify-between items-center gap-3 text-[12px]" style="border-top:1px solid rgba(241,237,226,.14);color:#8fa292">
       <span id="footer-copy"></span>
-      <span>Cría de hacienda con registro y trato directo</span>
+      <span>Con registro y trato directo del productor</span>
     </div>
   </div>
 </footer>
@@ -632,7 +632,7 @@ function renderStatic() {
 
   // Inicio
   $('#home-logos').innerHTML = PARTNERS.map(LOGOSLOT).join('');
-  $('#home-bento').innerHTML = HOME_CARDS.map(c => `
+  $('#home-bento').innerHTML = HOME_CARDS.filter(c => !c.oculta).map(c => `
     <a href="#/${c.to}" class="group relative overflow-hidden rounded-xl min-h-[300px] lg:min-h-0 transition-all duration-300 hover:-translate-y-0.5 hover:shadow-[0_24px_50px_-22px_rgba(16,35,26,0.8)] ${c.span}" style="border:1px solid rgba(31,58,43,.25)">
       <div class="absolute inset-0 transition-transform duration-700 group-hover:scale-[1.04]">${MEDIA(c.img, c.label, c.size, true)}</div>
       <div class="absolute inset-0 bg-gradient-to-t from-[#10231a]/92 via-[#10231a]/35 to-transparent"></div>
@@ -1044,6 +1044,37 @@ async function cargarDatosDesdeSupabase() {
       if (!on.has(catState.value)) catState.value = 'todos';
       chips(document.querySelector('#f-cat'), CAT_FILTROS, catState, renderAnimales);
     }
+  }
+
+  {
+    const MUESTRA = SITE === 'el-ombu';
+    if (!MUESTRA) {
+      const cs = (ACTIVAS && CATS_ALL.length) ? CATS_ALL.filter(c => ACTIVAS.has(c.id)).slice(0, 3) : [];
+      HOME_CARDS.forEach((c, i) => {
+        const cat = cs[i];
+        c.oculta = !!ACTIVAS && i >= Math.max(1, cs.length);
+        c.img = '';
+        c.tag = cat ? cat.grupo : 'Animales';
+        c.t = cat ? cat.label : 'Nuestros animales';
+        c.d = 'Animales criados con dedicación y con la documentación al día.';
+        c.cta = 'Ver animales';
+      });
+      if (!cfg.hero_sub) PAGES.inicio.sub = 'Animales criados con dedicación, con registro al día y trato directo del productor.';
+      if (!cfg.hero_img) PAGES.inicio.bg = '';
+      if (!cfg.animales_img) PAGES.animales.bg = '';
+      if (!cfg.contacto_img) PAGES.contacto.bg = cfg.hero_img || '';
+      if (!cfg.about_text) ABOUT.texto = 'Criamos con selección cuidadosa y sin vueltas: vas a hablar directo con quien cría los animales. Nos importa que cada animal llegue sano, manso y con todo en regla.';
+      if (!cfg.cria_title) document.querySelector('#home-bento').closest('section').querySelector('h2').innerHTML = 'Animales criados con dedicación,<br class="hidden sm:block"/> <span class="accent-text">con trato directo del productor.</span>';
+      if (!cfg.cria_text) document.querySelector('#home-bento').closest('section').querySelector('p').textContent = 'Animales sanos, mansos y con la documentación al día.';
+      if (!cfg.footer_blurb) BRAND.blurb = 'Cría con registro al día y trato directo del productor.';
+      if (!cfg.cta_venta) CTAS.venta = { k: 'Atención directa', t: '¿Buscás animales de calidad?', d: 'Escribinos y te pasamos la lista actualizada con fotos, videos y precios.' };
+    }
+    const kk = location.hash.replace(/^#\/?/, '') || 'inicio';
+    const pp = PAGES[kk === 'en-venta' ? 'animales' : kk] || PAGES.inicio;
+    $('#hero-badge').textContent = pp.badge;
+    $('#hero-title').innerHTML = pp.h1;
+    $('#hero-sub').textContent = pp.sub;
+    $('#hero-bg').style.backgroundImage = pp.bg ? `url('${pp.bg}')` : 'none';
   }
   
   if (cfg.about_title) ABOUT.titulo = cfg.about_title;
