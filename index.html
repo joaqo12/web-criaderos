@@ -889,6 +889,34 @@ const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 const _from = supabaseClient.from.bind(supabaseClient);
 supabaseClient.from = t => { const q = _from(t); const s = q.select.bind(q); q.select = (...a) => s(...a).eq('site_id', SITE); return q; };
 
+const MANEJADOS = ['Edad', 'Peso', 'Preñada', 'Sexo', 'Carácter', 'Pelaje', 'Nacimiento', 'Padre', 'Madre', 'Registro', 'Sanidad'];
+function edadDe(iso) {
+  const n = new Date(iso + 'T00:00:00'), h = new Date();
+  let m = (h.getFullYear() - n.getFullYear()) * 12 + h.getMonth() - n.getMonth();
+  if (h.getDate() < n.getDate()) m--;
+  if (isNaN(m) || m < 0) return '';
+  if (m < 1) return 'Menos de 1 mes';
+  if (m < 24) return m + (m === 1 ? ' mes' : ' meses');
+  return Math.floor(m / 12) + ' años';
+}
+const fechaMes = iso => new Date(iso + 'T00:00:00').toLocaleDateString('es-AR', { month: 'long', year: 'numeric' });
+function filasDeFicha(fi, attrs) {
+  const r = [];
+  const add = (k, v) => { if (v !== '' && v != null) r.push([k, String(v)]); };
+  add('Edad', fi.nac ? edadDe(fi.nac) : fi.edadTxt);
+  add('Peso', fi.peso ? fi.peso + ' kg' : '');
+  if (fi.prenada) add('Preñada', fi.parto ? 'Sí, parto estimado ' + fechaMes(fi.parto) : 'Sí');
+  add('Sexo', fi.sexo);
+  add('Carácter', fi.caracter);
+  add('Pelaje', fi.pelaje);
+  if (fi.nac) add('Nacimiento', fechaMes(fi.nac));
+  add('Padre', fi.padre); add('Madre', fi.madre);
+  add('Registro', fi.registro);
+  if (fi.sanidad) add('Sanidad', 'Al día');
+  Object.entries(attrs || {}).forEach(([k, v]) => { if (!MANEJADOS.includes(k) && !r.some(x => x[0] === k)) r.push([k, v]); });
+  return r;
+}
+  
 async function cargarDatosDesdeSupabase() {
 
   if (new URLSearchParams(location.search).get('editar') !== '1') {
@@ -924,7 +952,7 @@ async function cargarDatosDesdeSupabase() {
   const { data: animals } = await supabaseClient.from('animals').select('*');
   if (animals && typeof ANIMALES !== 'undefined') {
     ANIMALES.length = 0;
-    animals.forEach(a => {
+    animals.filter(a => a.published !== false).forEach(a => {
       ANIMALES.push({
         c: a.category,
         tag: a.tag,
@@ -936,7 +964,7 @@ async function cargarDatosDesdeSupabase() {
         fotos: a.gallery_urls || ['', ''],
         estado: a.status,
         precio: a.price,
-        f: Object.entries(a.attributes || {}),
+        f: a.ficha ? filasDeFicha(a.ficha, a.attributes) : Object.entries(a.attributes || {}), ficha: a.ficha || null,
         tags: a.tags || [],
         obs: a.observations || ''
       });
@@ -1452,7 +1480,7 @@ async function cargarDatosDesdeSupabase() {
       e.preventDefault(); e.stopPropagation();
       const b = art.querySelector('[data-ficha]');
       const an = b ? ANIMALES[+b.dataset.ficha] : null;
-      if (an && an.id) abrirAnimal(an.id);
+      if (an && an.ficha) { alert('Este animal se edita desde el panel, en "Tus animales".'); return; } if (an && an.id) abrirAnimal(an.id);
       return;
     }
     const tr = e.target.closest('#lotes-body tr');
