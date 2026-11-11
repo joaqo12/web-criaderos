@@ -47,6 +47,25 @@
   .tabs button.on { background: #1f3a2b; color: #f4f0e6; }
   .card h3 { margin: 0 0 8px; font-size: 16px; }
   .campo { margin-top: 14px; }
+
+  input[type=checkbox] { width: auto; margin: 0 8px 0 0; }
+  .chk { display: flex; align-items: center; font-size: 13px; font-weight: 600; margin-top: 12px; }
+  #ta-form h3 { margin: 18px 0 0; font-size: 14px; border-bottom: 1px solid #dcd5c3; padding-bottom: 4px; }
+  .tabar { display: grid; grid-template-columns: 2fr 1fr 1fr auto; gap: 10px; align-items: end; margin: 8px 0; }
+  .tabar button { margin-top: 0; }
+  .badge { display: inline-block; padding: 1px 8px; border-radius: 999px; font-size: 11px; font-weight: 700; margin-left: 6px; }
+  .b-on { background: #e1ecd9; color: #2b5a3f; }
+  .b-off { background: #eee; color: #777; }
+  @media (max-width: 700px) { .tabar { grid-template-columns: 1fr; } }
+  @media (min-width: 900px) {
+    #app { display: grid; grid-template-columns: 190px 1fr; column-gap: 28px; align-items: start; max-width: 1120px; }
+    #app > .top { grid-column: 1 / -1; }
+    #app > #tabs { grid-column: 1; grid-row: 2 / span 60; flex-direction: column; flex-wrap: nowrap; position: sticky; top: 12px; margin: 16px 0; padding: 0; background: transparent; }
+    #app > :not(.top):not(#tabs) { grid-column: 2; min-width: 0; }
+    #tabs button { text-align: left; width: 100%; }
+  }
+
+
   
   .catzona { min-height: 60px; border: 2px dashed #d3ccb8; border-radius: 10px; padding: 8px; margin-top: 6px; display: flex; flex-wrap: wrap; gap: 8px; align-content: flex-start; }
   .catzona.sobre { border-color: #1f3a2b; background: #eef3ea; }
@@ -84,6 +103,71 @@
     <div><h1 id="app-title"></h1><small id="app-user"></small><br><a id="app-link" target="_blank" rel="noopener"></a></div>
     <div class="acc"><button id="btn-vista" class="sec">Ver vista previa</button><button id="btn-editor">Editar mi web</button><button id="salir">Cerrar sesión</button></div>
   </div>
+
+  <div data-tab="tusanimales">
+    <div id="ta-cats"></div>
+    <h2>Tus animales</h2>
+    <div class="tabar">
+      <label>Buscar<input id="ta-buscar" placeholder="Nombre, raza o caravana"/></label>
+      <label>Especie<select id="ta-fcat"></select></label>
+      <label>En la web<select id="ta-fpub"><option value="">Todos</option><option value="pub">Publicados</option><option value="oculto">Sin publicar</option></select></label>
+      <button id="ta-nuevo" type="button">+ Nuevo animal</button>
+    </div>
+    <div id="ta-msg" class="err"></div>
+
+    <form id="ta-form" class="card hidden">
+      <h3 id="ta-titulo" style="margin-top:0">Nuevo animal</h3>
+      <div class="grid2">
+        <label>Especie<select id="ta-cat"></select></label>
+        <label>Nombre<input id="ta-name" required/></label>
+        <label>Sexo<select id="ta-sexo"><option value="">(sin indicar)</option><option>Macho</option><option>Hembra</option></select></label>
+        <label>Raza<input id="ta-breed"/></label>
+        <label>Caravana o RP<input id="ta-rp"/></label>
+        <label>Pelaje o color<input id="ta-pelaje"/></label>
+      </div>
+      <h3>Edad y peso</h3>
+      <div class="grid2">
+        <label>Fecha de nacimiento<input id="ta-nac" type="date"/></label>
+        <label>Edad (si no sabés la fecha)<input id="ta-edadtxt" placeholder="Ej: 3 años"/></label>
+        <label>Peso (kg)<input id="ta-peso" type="number" min="0" step="0.1"/></label>
+        <label>Carácter<select id="ta-car"><option value="">(sin indicar)</option><option>Manso</option><option>Tranquilo</option><option>Nervioso</option></select></label>
+      </div>
+      <h3>Padres y registro</h3>
+      <div class="grid2">
+        <label>Padre<input id="ta-padre"/></label>
+        <label>Madre<input id="ta-madre"/></label>
+        <label>Registro<select id="ta-reg"><option value="">(sin indicar)</option><option>Con pedigrí</option><option>Sin pedigrí</option><option>En trámite</option></select></label>
+      </div>
+      <h3>Reproducción y sanidad</h3>
+      <div id="ta-prenbox">
+        <label class="chk"><input id="ta-pren" type="checkbox"/> Preñada</label>
+        <label id="ta-partobox">Parto estimado<input id="ta-parto" type="date"/></label>
+      </div>
+      <label class="chk"><input id="ta-san" type="checkbox"/> Sanidad al día (vacunas y desparasitación)</label>
+      <h3>Venta</h3>
+      <div class="grid2">
+        <label>Estado<select id="ta-estado"></select></label>
+        <label>Precio<select id="ta-ptipo"><option>Consultar</option><option>Monto</option><option>No se vende</option></select></label>
+        <label id="ta-pmbox">Monto<input id="ta-pmonto" type="number" min="0"/></label>
+        <label id="ta-pmonbox">Moneda<select id="ta-pmon"><option value="US$">Dólares (US$)</option><option value="$">Pesos ($)</option></select></label>
+      </div>
+      <h3>Fotos (principal, 2 y 3)</h3>
+      <div class="fotos">
+        <div><input type="file" accept="image/*" data-taf="0"/><img id="ta-foto-0"/></div>
+        <div><input type="file" accept="image/*" data-taf="1"/><img id="ta-foto-1"/></div>
+        <div><input type="file" accept="image/*" data-taf="2"/><img id="ta-foto-2"/></div>
+      </div>
+      <label>Comentario (opcional)<textarea id="ta-obs" rows="3"></textarea></label>
+      <label class="chk"><input id="ta-pub" type="checkbox" checked/> Mostrar en mi web</label>
+      <button type="submit">Guardar</button>
+      <button type="button" class="sec" id="ta-cancel">Cancelar</button>
+      <div id="ta-fmsg" class="err"></div>
+    </form>
+
+    <div id="ta-lista"></div>
+  </div>
+
+  
   <h2>Animales</h2>
 
   <div class="card" id="cat-box">
@@ -213,7 +297,7 @@ async function iniciar() {
   SITE = asign[0].site_id;   $('#app-link').href = '/?c=' + SITE;   $('#app-link').textContent = location.origin + '/?c=' + SITE;
   $('#app-title').textContent = asign[0].sites ? asign[0].sites.name : SITE;
   $('#app-user').textContent = 'Sesión iniciada como ' + session.user.email;
-  $('#login').classList.add('hidden'); $('#app').classList.remove('hidden');   armarPanel(); cargarCategorias(); cargarAnimales(); cargarLotes(); cargarSettings(); GRUPOS.forEach(cargarGrupo); cargarCampos();
+  $('#login').classList.add('hidden'); $('#app').classList.remove('hidden');   $('#ta-cats').appendChild($('#cat-box')); armarPanel(); cargarCategorias(); cargarTA(); cargarAnimales(); cargarLotes(); cargarSettings(); GRUPOS.forEach(cargarGrupo); cargarCampos();
 }
 
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -515,7 +599,7 @@ document.addEventListener('click', e => {
     setTimeout(() => { if (document.body.classList.contains('vista')) refrescarVista(); }, 1800);
 });
 
-const TABS = [['inicio', 'Inicio'], ['animales', 'Animales'], ['lotes', 'Lotes'], ['contacto', 'Contacto'], ['marca', 'Marca y colores'], ['avanzado', 'Avanzado']];
+const TABS = [['tusanimales', 'Tus animales'], ['inicio', 'Inicio'], ['animales', 'Animales (libre)'], ['lotes', 'Lotes'], ['contacto', 'Contacto'], ['marca', 'Marca y colores'], ['avanzado', 'Avanzado']];
 const COLORES_DEF = { ink: '#1d2a22', muted: '#5d6b61', accent: '#2f5a42', brass: '#8a6f36', dtext: '#f1ede2', dmuted: '#bccabd', daccent: '#c5dbb9', dbrass: '#d9bf85', dark: '#14261c', main: '#1f3a2b', mid: '#2f5a42', light: '#3a7355', band1: '#26442f', band2: '#1a3023', cta: '#34674c', bg: '#f4f0e6', bg2: '#ebe6d9', card: '#fbf9f3', line: '#dcd5c3', sage: '#8fa88f', gold: '#a98a4d', tint: '#dfe7da', tintline: '#c3d1bd' };
 
 const CAMPOS = {
@@ -700,7 +784,7 @@ function armarPanel() {
   nav.innerHTML = TABS.map(([k, l]) => `<button type="button" data-t="${k}">${l}</button>`).join('');
   nav.addEventListener('click', e => { if (e.target.dataset.t) mostrarTab(e.target.dataset.t); });
   top.after(nav);
-  mostrarTab('inicio');
+  mostrarTab('tusanimales');
 }
 
 
@@ -784,6 +868,191 @@ async function moverCat(id, encender) {
   z.addEventListener('dragleave', () => z.classList.remove('sobre'));
   z.addEventListener('drop', e => { e.preventDefault(); z.classList.remove('sobre'); const id = e.dataTransfer.getData('text/plain'); if (id) moverCat(id, enc); });
 });
+
+/* ===== TUS ANIMALES ===== */
+const MANEJADOS = ['Edad', 'Peso', 'Preñada', 'Sexo', 'Carácter', 'Pelaje', 'Nacimiento', 'Padre', 'Madre', 'Registro', 'Sanidad'];
+function edadDe(iso) {
+  const n = new Date(iso + 'T00:00:00'), h = new Date();
+  let m = (h.getFullYear() - n.getFullYear()) * 12 + h.getMonth() - n.getMonth();
+  if (h.getDate() < n.getDate()) m--;
+  if (isNaN(m) || m < 0) return '';
+  if (m < 1) return 'Menos de 1 mes';
+  if (m < 24) return m + (m === 1 ? ' mes' : ' meses');
+  return Math.floor(m / 12) + ' años';
+}
+const fechaMes = iso => new Date(iso + 'T00:00:00').toLocaleDateString('es-AR', { month: 'long', year: 'numeric' });
+function filasDeFicha(fi, attrs) {
+  const r = [];
+  const add = (k, v) => { if (v !== '' && v != null) r.push([k, String(v)]); };
+  add('Edad', fi.nac ? edadDe(fi.nac) : fi.edadTxt);
+  add('Peso', fi.peso ? fi.peso + ' kg' : '');
+  if (fi.prenada) add('Preñada', fi.parto ? 'Sí, parto estimado ' + fechaMes(fi.parto) : 'Sí');
+  add('Sexo', fi.sexo);
+  add('Carácter', fi.caracter);
+  add('Pelaje', fi.pelaje);
+  if (fi.nac) add('Nacimiento', fechaMes(fi.nac));
+  add('Padre', fi.padre); add('Madre', fi.madre);
+  add('Registro', fi.registro);
+  if (fi.sanidad) add('Sanidad', 'Al día');
+  Object.entries(attrs || {}).forEach(([k, v]) => { if (!MANEJADOS.includes(k) && !r.some(x => x[0] === k)) r.push([k, v]); });
+  return r;
+}
+function etiquetasDe(fi) {
+  const t = [];
+  if (fi.prenada) t.push('Preñada');
+  if (fi.registro === 'Con pedigrí') t.push('Pedigrí');
+  if (fi.sanidad) t.push('Sanidad al día');
+  return t;
+}
+
+let TA = [], TAEDIT = null, TAF = ['', '', ''], TAATTRS = {};
+const labelDe = id => (CATS_LISTA.find(c => c.id === id) || { label: id }).label;
+$('#ta-estado').innerHTML = ESTADOS.map(e => `<option>${e}</option>`).join('');
+
+function refrescarTodo() {
+  cargarTA(); cargarAnimales();
+  if (document.body.classList.contains('vista')) setTimeout(refrescarVista, 800);
+}
+
+async function cargarTA() {
+  const { data, error } = await sb.from('animals').select('*').eq('site_id', SITE).order('id', { ascending: false });
+  if (error) { $('#ta-msg').textContent = error.message; return; }
+  TA = data;
+  const ids = [...new Set(TA.map(a => a.category))];
+  const actual = $('#ta-fcat').value;
+  $('#ta-fcat').innerHTML = '<option value="">Todas</option>' + ids.map(i => `<option value="${esc(i)}">${esc(labelDe(i))}</option>`).join('');
+  $('#ta-fcat').value = ids.includes(actual) ? actual : '';
+  pintarTA();
+}
+
+function pintarTA() {
+  const q = $('#ta-buscar').value.trim().toLowerCase(), fc = $('#ta-fcat').value, fp = $('#ta-fpub').value;
+  const l = TA.filter(a =>
+    (!q || [a.name, a.breed, a.rp, labelDe(a.category)].join(' ').toLowerCase().includes(q)) &&
+    (!fc || a.category === fc) &&
+    (!fp || (fp === 'pub') === (a.published !== false)));
+  $('#ta-lista').innerHTML = l.length ? l.map(a => {
+    const fi = a.ficha || {}, at = a.attributes || {};
+    const ed = fi.nac ? edadDe(fi.nac) : (fi.edadTxt || at.Edad || '');
+    const pe = fi.peso ? fi.peso + ' kg' : (at.Peso || '');
+    const pub = a.published !== false;
+    return `<div class="fila">
+      <img src="${esc(a.main_image_url)}" onerror="this.style.visibility='hidden'"/>
+      <div><b>${esc(a.name)}</b><span class="badge ${pub ? 'b-on' : 'b-off'}">${pub ? 'En la web' : 'Sin publicar'}</span><br><small>${[esc(labelDe(a.category)), esc(a.status), esc(ed), esc(pe)].filter(Boolean).join(' · ')}</small></div>
+      <div class="acc"><button data-taed="${a.id}">Editar</button><button data-tapub="${a.id}">${pub ? 'Quitar de la web' : 'Publicar en la web'}</button><button class="rojo" data-tadel="${a.id}">Borrar</button></div>
+    </div>`;
+  }).join('') : '<p>No hay animales que coincidan.</p>';
+}
+
+function taVis() {
+  $('#ta-prenbox').style.display = $('#ta-sexo').value === 'Hembra' ? '' : 'none';
+  $('#ta-partobox').style.display = $('#ta-pren').checked ? '' : 'none';
+  const m = $('#ta-ptipo').value === 'Monto';
+  $('#ta-pmbox').style.display = m ? '' : 'none';
+  $('#ta-pmonbox').style.display = m ? '' : 'none';
+}
+['ta-sexo', 'ta-pren', 'ta-ptipo'].forEach(id => $('#' + id).addEventListener('change', taVis));
+
+function pintarTAF() {
+  TAF.forEach((u, i) => { const im = $('#ta-foto-' + i); im.src = u || ''; im.style.visibility = u ? 'visible' : 'hidden'; });
+}
+
+function abrirTA(a) {
+  $('#ta-cat').innerHTML = catOpciones(a ? a.category : null);
+  if (!$('#ta-cat').options.length) { $('#ta-msg').textContent = 'Primero poné una categoría en uso en la caja Categorías.'; return; }
+  $('#ta-msg').textContent = '';
+  TAEDIT = a ? a.id : null;
+  TAATTRS = (a && a.attributes) || {};
+  const at = TAATTRS;
+  const num = s => { const m = String(s || '').match(/[\d.,]+/); return m ? m[0].replace(',', '.') : ''; };
+  const fi = (a && a.ficha) || {
+    edadTxt: at.Edad || '', peso: num(at.Peso), pelaje: at.Pelaje || '', padre: at.Padre || '', madre: at.Madre || '',
+    caracter: ['Manso', 'Tranquilo', 'Nervioso'].includes(at['Carácter']) ? at['Carácter'] : '',
+    registro: /pedigr/i.test(at.Registro || '') ? 'Con pedigrí' : '', sanidad: /al d[ií]a/i.test(at.Sanidad || '')
+  };
+  const pr = (a && a.price) || '';
+  $('#ta-titulo').textContent = a ? 'Editar animal' : 'Nuevo animal';
+  $('#ta-cat').value = a ? a.category : $('#ta-cat').options[0].value;
+  $('#ta-name').value = a ? a.name : '';
+  $('#ta-sexo').value = fi.sexo || '';
+  $('#ta-breed').value = a ? (a.breed || '') : '';
+  $('#ta-rp').value = a ? (a.rp || '') : '';
+  $('#ta-pelaje').value = fi.pelaje || '';
+  $('#ta-nac').value = fi.nac || '';
+  $('#ta-edadtxt').value = fi.edadTxt || '';
+  $('#ta-peso').value = fi.peso || '';
+  $('#ta-car').value = fi.caracter || '';
+  $('#ta-padre').value = fi.padre || '';
+  $('#ta-madre').value = fi.madre || '';
+  $('#ta-reg').value = fi.registro || '';
+  $('#ta-pren').checked = !!fi.prenada;
+  $('#ta-parto').value = fi.parto || '';
+  $('#ta-san').checked = !!fi.sanidad;
+  $('#ta-estado').value = a ? a.status : ESTADOS[0];
+  $('#ta-ptipo').value = fi.pTipo || (/no se vende/i.test(pr) ? 'No se vende' : (/\d/.test(pr) ? 'Monto' : 'Consultar'));
+  $('#ta-pmonto').value = fi.pMonto || (/\d/.test(pr) ? pr.replace(/[^\d]/g, '') : '');
+  $('#ta-pmon').value = fi.pMon || (/US/i.test(pr) ? 'US$' : (/\d/.test(pr) ? '$' : 'US$'));
+  $('#ta-obs').value = a ? (a.observations || '') : '';
+  $('#ta-pub').checked = a ? a.published !== false : true;
+  TAF = [a ? (a.main_image_url || '') : '', a ? ((a.gallery_urls || [])[0] || '') : '', a ? ((a.gallery_urls || [])[1] || '') : ''];
+  document.querySelectorAll('[data-taf]').forEach(i => { i.value = ''; });
+  pintarTAF(); taVis();
+  $('#ta-fmsg').textContent = '';
+  $('#ta-form').classList.remove('hidden');
+  $('#ta-form').scrollIntoView({ behavior: 'smooth' });
+}
+
+$('#ta-nuevo').onclick = () => abrirTA(null);
+$('#ta-cancel').onclick = () => $('#ta-form').classList.add('hidden');
+['ta-buscar', 'ta-fcat', 'ta-fpub'].forEach(id => { $('#' + id).addEventListener('input', pintarTA); $('#' + id).addEventListener('change', pintarTA); });
+
+document.querySelectorAll('[data-taf]').forEach(inp => inp.addEventListener('change', async () => {
+  const f = inp.files[0]; if (!f) return;
+  $('#ta-fmsg').textContent = 'Subiendo foto...';
+  try { TAF[+inp.dataset.taf] = await subirFoto(f); pintarTAF(); $('#ta-fmsg').textContent = ''; }
+  catch (e) { $('#ta-fmsg').textContent = 'Error al subir: ' + e.message; }
+}));
+
+$('#ta-form').addEventListener('submit', async e => {
+  e.preventDefault();
+  const v = id => $('#' + id).value.trim();
+  const fi = {
+    sexo: v('ta-sexo'), nac: v('ta-nac'), edadTxt: v('ta-edadtxt'), peso: v('ta-peso'), caracter: v('ta-car'), pelaje: v('ta-pelaje'),
+    padre: v('ta-padre'), madre: v('ta-madre'), registro: v('ta-reg'),
+    prenada: v('ta-sexo') === 'Hembra' && $('#ta-pren').checked, parto: v('ta-parto'), sanidad: $('#ta-san').checked,
+    pTipo: v('ta-ptipo'), pMonto: v('ta-pmonto'), pMon: v('ta-pmon')
+  };
+  if (!fi.prenada) fi.parto = '';
+  const price = fi.pTipo === 'Monto' && fi.pMonto ? fi.pMon + ' ' + Number(fi.pMonto).toLocaleString('es-AR') : (fi.pTipo === 'No se vende' ? 'No se vende' : 'Consultar');
+  const cat = $('#ta-cat').value;
+  const row = {
+    site_id: SITE, name: v('ta-name'), category: cat, tag: labelDe(cat), breed: v('ta-breed'), rp: v('ta-rp'),
+    status: $('#ta-estado').value, price, observations: v('ta-obs'), tags: etiquetasDe(fi),
+    attributes: Object.fromEntries(filasDeFicha(fi, TAATTRS)), ficha: fi,
+    main_image_url: TAF[0], gallery_urls: [TAF[1], TAF[2]], published: $('#ta-pub').checked
+  };
+  if (!row.name) { $('#ta-fmsg').textContent = 'Poné un nombre.'; return; }
+  $('#ta-fmsg').textContent = 'Guardando...';
+  const { error } = TAEDIT ? await sb.from('animals').update(row).eq('id', TAEDIT).eq('site_id', SITE) : await sb.from('animals').insert(row);
+  if (error) { $('#ta-fmsg').textContent = 'Error: ' + error.message; return; }
+  $('#ta-form').classList.add('hidden');
+  refrescarTodo();
+});
+
+$('#ta-lista').addEventListener('click', async e => {
+  const ed = e.target.dataset.taed, pu = e.target.dataset.tapub, del = e.target.dataset.tadel;
+  if (ed) abrirTA(TA.find(a => a.id == ed));
+  if (pu) {
+    const a = TA.find(x => x.id == pu);
+    const { error } = await sb.from('animals').update({ published: a.published === false }).eq('id', pu).eq('site_id', SITE);
+    if (error) $('#ta-msg').textContent = 'Error: ' + error.message; else refrescarTodo();
+  }
+  if (del && confirm('¿Borrar este animal para siempre? Si solo querés sacarlo de la web, usá "Quitar de la web".')) {
+    const { error } = await sb.from('animals').delete().eq('id', del).eq('site_id', SITE);
+    if (error) $('#ta-msg').textContent = 'Error: ' + error.message; else refrescarTodo();
+  }
+});
+
   
 $('#f-login').addEventListener('submit', async e => {
   e.preventDefault();
