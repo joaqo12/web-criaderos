@@ -638,8 +638,8 @@ function renderStatic() {
       <div class="absolute inset-0 bg-gradient-to-t from-[#10231a]/92 via-[#10231a]/35 to-transparent"></div>
       <span class="tag absolute top-4 left-4">${c.tag}</span>
       <div class="absolute inset-x-0 bottom-0 p-6 space-y-2">
-        <h3 class="font-sans ${c.big ? 'text-2xl sm:text-3xl' : 'text-xl'} font-bold" style="color:#f4f0e6">${c.t}</h3>
-        <p class="text-[13px] max-w-md leading-relaxed" style="color:#d6d9cb">${c.d}</p>
+        <h3 class="font-sans ${c.big ? 'text-2xl sm:text-3xl' : 'text-xl'} font-bold" style="color:var(--c-dtext)">${c.t}</h3>
+        <p class="text-[13px] max-w-md leading-relaxed" style="color:var(--c-dtext);opacity:.85">${c.d}</p>
         <span class="inline-flex items-center gap-1.5 text-[12px] font-semibold pt-1" style="color:var(--c-dbrass)">${c.cta}<span class="material-symbols-outlined text-[16px] group-hover:translate-x-1 transition-transform" style="color:#d9bf85">arrow_forward</span></span>
       </div>
     </a>`).join('');
@@ -716,7 +716,7 @@ function renderStatic() {
         <div class="space-y-3 max-w-2xl">
           <span class="eyebrow">${c.k}</span>
           <h3 class="ink font-sans text-2xl sm:text-3xl lg:text-4xl font-bold leading-tight">${c.t}</h3>
-          <p class="text-sm sm:text-[15px] leading-relaxed" style="color:#d9ddd0">${c.d}</p>
+          <p class="text-sm sm:text-[15px] leading-relaxed" style="color:var(--c-dtext);opacity:.85">${c.d}</p>
         </div>
         <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 w-full lg:w-auto shrink-0">
           <a class="btn btn-outline-light" href="#/animales">Ver nuestros animales</a>
@@ -1883,6 +1883,148 @@ async function cargarDatosDesdeSupabase() {
   }
   byId('ed-col').onclick = colores;
   
+  /* ===== COLOR EN CADA VENTANITA Y CLIC EN FONDOS ===== */
+  const st7 = document.createElement('style');
+  st7.textContent = `#ed-pop .colbox{border-top:1px solid #dcd5c3;margin-top:14px;padding-top:8px;font-size:12px}
+  #ed-pop .colr{display:flex;align-items:center;gap:10px;margin-top:8px;font-weight:600;font-size:13px}
+  #ed-pop .colr input[type=color]{width:44px;height:34px;padding:2px;margin:0;flex:none;cursor:pointer}
+  #ed-pop .colr button{padding:2px 9px;font-size:13px;margin-left:auto}
+  #ed-pop .colbox small{display:block;color:#5d6b61;font-weight:400;margin-top:8px}
+  .ed-hover6{outline:2px dashed #3a85b0!important;outline-offset:-3px;cursor:pointer!important}`;
+  document.head.appendChild(st7);
+  bar.querySelector('span').textContent = 'Modo edición: tocá un texto, una foto o un fondo';
+
+  const NOMBRE = {
+    ink: 'Títulos y textos', muted: 'Párrafos', brass: 'Etiquetas pequeñas', accent: 'Parte destacada de los títulos',
+    dtext: 'Títulos sobre fondo oscuro', dmuted: 'Párrafos sobre fondo oscuro', daccent: 'Parte destacada (fondo oscuro)', dbrass: 'Etiquetas doradas (fondo oscuro)',
+    bg: 'Fondo de la página', bg2: 'Fondo de las franjas', card: 'Fondo de las tarjetas', line: 'Bordes y líneas',
+    dark: 'Fondo oscuro (portada y pie)', band1: 'Banda, parte de arriba', band2: 'Banda, parte de abajo', cta: 'Color del banner',
+    main: 'Color principal', mid: 'Color secundario (links y detalles)', light: 'Color claro (botones)',
+    sage: 'Detalle suave de la franja', gold: 'Dorado de detalles', tint: 'Fondo de íconos y etiquetas', tintline: 'Borde de íconos y etiquetas'
+  };
+  const cv = k => getComputedStyle(document.documentElement).getPropertyValue('--c-' + k).trim();
+  const hex = v => /^#[0-9a-f]{6}$/i.test(v) ? v : '#000000';
+  const oscuro = n => !!n.closest('.on-dark');
+
+  function claveTexto(n) {
+    for (let x = n; x && x !== document.body; x = x.parentElement) {
+      const m = (x.getAttribute('style') || '').match(/(?:^|;)\s*color\s*:\s*var\(--c-(\w+)\)/);
+      if (m) return m[1];
+      if (x.classList.contains('accent-text')) return oscuro(x) ? 'daccent' : 'accent';
+      if (x.classList.contains('brass') || x.classList.contains('eyebrow')) return oscuro(x) ? 'dbrass' : 'brass';
+      if (x.classList.contains('muted')) return oscuro(x) ? 'dmuted' : 'muted';
+      if (x.classList.contains('ink')) return oscuro(x) ? 'dtext' : 'ink';
+    }
+    return oscuro(n) ? 'dtext' : 'ink';
+  }
+  const clavesDe = nodos => { const s = []; nodos.filter(Boolean).forEach(n => { const k = claveTexto(n); if (!s.includes(k)) s.push(k); }); return s; };
+
+  function filasColor(keys) {
+    return '<div class="colbox"><b>Colores</b>' + keys.map(k => `<div class="colr"><input type="color" data-ck="${k}" value="${hex(cv(k))}"/><span>${E(NOMBRE[k] || k)}</span><button type="button" data-cr="${k}" title="Volver al original">↺</button></div>`).join('') + '<small>Se guarda al elegir el color y cambia todo lo que usa ese mismo color.</small></div>';
+  }
+
+  function cablearColores(p) {
+    p.addEventListener('input', e => {
+      const k = e.target.dataset && e.target.dataset.ck; if (!k) return;
+      document.documentElement.style.setProperty('--c-' + k, e.target.value);
+    });
+    p.addEventListener('change', async e => {
+      const k = e.target.dataset && e.target.dataset.ck; if (!k) return;
+      const { error } = await supabaseClient.from('site_settings').upsert({ site_id: SITE, key: 'color_' + k, value: e.target.value, image_url: null, updated_at: new Date().toISOString() }, { onConflict: 'site_id,key' });
+      const m = byId('ed-msg'); if (m) m.textContent = error ? 'Error: ' + error.message : '';
+    });
+    p.addEventListener('click', async e => {
+      const k = e.target.dataset && e.target.dataset.cr; if (!k) return;
+      document.documentElement.style.removeProperty('--c-' + k);
+      const inp = p.querySelector('[data-ck="' + k + '"]'); if (inp) inp.value = hex(cv(k));
+      const { error } = await supabaseClient.from('site_settings').delete().eq('site_id', SITE).eq('key', 'color_' + k);
+      const m = byId('ed-msg'); if (m) m.textContent = error ? 'Error: ' + error.message : '';
+    });
+  }
+
+  function conColores(keys) {
+    const p = byId('ed-pop'), m = byId('ed-msg');
+    if (!p || !m || !keys.length) return;
+    m.insertAdjacentHTML('beforebegin', filasColor(keys));
+    cablearColores(p);
+  }
+
+  const _abrir = abrir;
+  abrir = function (h) {
+    _abrir(h);
+    let el = null; try { el = h.el(); } catch (x) {}
+    if (!el || el.closest('#topbar')) return;
+    if (h.t === 'img') { if (el.id === 'hero') conColores(['dark']); return; }
+    const nodos = h.t === 'dest' ? [el, el.querySelector('.accent-text')] : [el.querySelector('p') || el];
+    conColores(clavesDe(nodos));
+  };
+
+  const _abrirMulti = abrirMulti;
+  abrirMulti = function (m) {
+    _abrirMulti(m);
+    let e = null; try { e = m.el(); } catch (x) {}
+    if (!e) return;
+    conColores(clavesDe(e.matches('p') ? [e] : ['.eyebrow', 'h3', 'h4', 'p'].map(s => e.querySelector(s))));
+  };
+
+  const _abrirFaq = abrirFaq;
+  abrirFaq = function (i) {
+    _abrirFaq(i);
+    const d = byId('faq').children[i >= 0 ? i : 0];
+    if (d) conColores(clavesDe([d.querySelector('summary'), d.querySelector('p')]));
+  };
+
+  /* Clic en un fondo */
+  const FONDOS = [
+    ['.ibox', 'Fondo de los íconos', ['tint', 'tintline'], true],
+    ['.cta-banner', 'Banner de consulta', ['cta', 'main', 'dark']],
+    ['.band-green', 'Banda de color', ['band1', 'band2']],
+    ['#hero', 'Portada', ['dark']],
+    ['footer', 'Pie de página', ['dark']],
+    ['.band-bg2', 'Franja de fondo', ['bg2', 'line']],
+    ['.panel', 'Tarjeta', ['card', 'line', 'sage', 'gold'], true]
+  ];
+  function zonaFondo(t) {
+    if (t.closest('#topbar')) return null;
+    for (let n = t; n && n !== document.documentElement; n = n.parentElement) {
+      for (const [s, titulo, keys, noOscuro] of FONDOS) {
+        if (n.matches(s) && !(noOscuro && n.closest('.on-dark'))) return { el: n, titulo, keys };
+      }
+    }
+    return { el: t.closest('section') || document.body, titulo: 'Fondo de la página', keys: ['bg', 'line'] };
+  }
+  const interactivo = t => t.closest('a, button, input, select, textarea, summary, label');
+  const manejado = t => hit(t) || muHit(t) || t.closest('#animales-grid article, #lotes-body tr, #faq details, #home-logos > div, #home-gallery figure');
+
+  function abrirFondo(z) {
+    cerrar();
+    const p = document.createElement('div'); p.id = 'ed-pop';
+    p.innerHTML = `<div class="in"><h3>${E(z.titulo)}</h3>${filasColor(z.keys)}<div class="msg" id="ed-msg"></div><div class="row"><button class="p" id="ed-no" type="button">Listo</button></div></div>`;
+    document.body.appendChild(p);
+    byId('ed-no').onclick = cerrar;
+    cablearColores(p);
+  }
+
+  let hov6 = null;
+  document.addEventListener('mouseover', e => {
+    if (hov6) hov6.classList.remove('ed-hover6');
+    hov6 = null;
+    const t = e.target;
+    if (t.closest('#ed-pop, #ed-bar') || interactivo(t) || manejado(t)) return;
+    const z = zonaFondo(t);
+    if (z) { hov6 = z.el; hov6.classList.add('ed-hover6'); }
+  });
+  document.addEventListener('click', e => {
+    if (e.defaultPrevented) return;
+    const t = e.target;
+    if (t.closest('#ed-pop, #ed-bar') || interactivo(t) || manejado(t)) return;
+    const z = zonaFondo(t);
+    if (!z) return;
+    e.preventDefault(); e.stopPropagation();
+    abrirFondo(z);
+  }, true);
+
+
   
   const y = sessionStorage.getItem('edY');
   if (y) { sessionStorage.removeItem('edY'); setTimeout(() => window.scrollTo(0, +y), 1500); }
