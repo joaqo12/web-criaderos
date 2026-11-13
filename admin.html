@@ -294,7 +294,7 @@ async function iniciar() {
     await sb.auth.signOut();
     return;
   }
-  SITE = asign[0].site_id;   $('#app-link').href = '/?c=' + SITE;   $('#app-link').textContent = location.origin + '/?c=' + SITE;
+  SITE = asign[0].site_id;   const { data: sd } = await sb.from('sites').select('domain').eq('id', SITE).maybeSingle(); const propio = !!(sd && sd.domain && location.hostname.replace(/^www\./, '') === sd.domain); $('#app-link').href = propio ? '/' : '/?c=' + SITE;   $('#app-link').textContent = location.origin + (propio ? '/' : '/?c=' + SITE);
   $('#app-title').textContent = asign[0].sites ? asign[0].sites.name : SITE;
   $('#app-user').textContent = 'Sesión iniciada como ' + session.user.email;
   $('#login').classList.add('hidden'); $('#app').classList.remove('hidden');   $('#ta-cats').appendChild($('#cat-box')); armarPanel(); cargarCategorias(); cargarTA(); cargarAnimales(); cargarLotes(); cargarSettings(); GRUPOS.forEach(cargarGrupo); cargarCampos();
