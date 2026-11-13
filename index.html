@@ -885,7 +885,7 @@ const SUPABASE_URL = 'https://wavxivsalphthkmekzla.supabase.co';
 const SUPABASE_KEY = 'sb_publishable_Ugsbe8guq0pJFWiGiarZZQ__6JVV-Ix';
 const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-  const SITE = new URLSearchParams(location.search).get('c') || 'el-ombu';
+  let SITE = new URLSearchParams(location.search).get('c') || 'el-ombu';
 const _from = supabaseClient.from.bind(supabaseClient);
 supabaseClient.from = t => { const q = _from(t); const s = q.select.bind(q); q.select = (...a) => s(...a).eq('site_id', SITE); return q; };
 
@@ -916,6 +916,16 @@ function filasDeFicha(fi, attrs) {
   Object.entries(attrs || {}).forEach(([k, v]) => { if (!MANEJADOS.includes(k) && !r.some(x => x[0] === k)) r.push([k, v]); });
   return r;
 }
+
+
+  if (!window._dom && !new URLSearchParams(location.search).get('c')) {
+    const { data: d, error: de } = await _from('sites').select('id').eq('domain', location.hostname.replace(/^www\./, '')).maybeSingle();
+    if (de) throw de;
+    window._dom = true;
+    if (d) SITE = d.id;
+  }
+
+
   
 async function cargarDatosDesdeSupabase() {
 
