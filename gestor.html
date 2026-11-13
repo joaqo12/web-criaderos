@@ -106,7 +106,7 @@ function pintar() {
       </p>
       <div class="grid2">
         <label>Plan o precio<input data-f="plan" value="${esc(x.plan)}" placeholder="Ej: básico, 15000 por mes"/></label>
-        <label>Notas<textarea data-f="notas" rows="2" placeholder="Qué pidió, cuándo paga...">${esc(x.notas)}</textarea></label>
+        <label>Notas<textarea data-f="notas" rows="2" placeholder="Qué pidió, cuándo paga...">${esc(x.notas)}</textarea></label>         <label>Dominio del cliente (sin www)<input data-f="dominio" value="${esc(x.domain || '')}" placeholder="ej: cabanalaesperanza.com.ar"/></label>
       </div>
       <button data-guardar="1">Guardar plan y notas</button>
       <button data-toggle="1" class="${x.active ? 'rojo' : 'sec'}">${x.active ? 'Suspender' : 'Reactivar'}</button>
@@ -150,8 +150,8 @@ $('#lista').addEventListener('click', async e => {
     const { error } = await sb.from('site_admin').upsert(
       { site_id: id, plan: card.querySelector('[data-f=plan]').value.trim(), notes: card.querySelector('[data-f=notas]').value.trim() },
       { onConflict: 'site_id' });
-    msg.textContent = error ? 'Error: ' + error.message : 'Guardado.';
-    if (!error) cargar();
+    let err2 = error;     if (!err2) {       const dom = (card.querySelector('[data-f=dominio]').value || '').trim().toLowerCase().replace(/^https?:\/\//, '').replace(/^www\./, '').replace(/\/.*$/, '');       const r = await sb.from('sites').update({ domain: dom || null }).eq('id', id);       err2 = r.error;     }     msg.textContent = err2 ? 'Error: ' + (err2.code === '23505' ? 'Ese dominio ya está asignado a otro cliente.' : err2.message) : 'Guardado.';
+    if (!err2) cargar();
   }
   if (e.target.dataset.toggle) {
     const x = SITIOS.find(s => s.id === id);
