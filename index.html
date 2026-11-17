@@ -2103,7 +2103,7 @@ async function cargarDatosDesdeSupabase() {   await resolverDominio();
 
     /* ===== ESTILOS EN LA VENTANA COLORES ===== */
   const _colores = colores;
-  colores = function () {
+  const _coloresConEstilo = function () {
     _colores();
     const p = byId('ed-pop'); if (!p) return;
     const actual = document.documentElement.getAttribute('data-tema') || '';
