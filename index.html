@@ -937,14 +937,14 @@ function filasDeFicha(fi, attrs) {
   return r;
 }
 
-
+/*
   if (!window._dom && !new URLSearchParams(location.search).get('c')) {
     const { data: d, error: de } = await _from('sites').select('id').eq('domain', location.hostname.replace(/^www\./, '')).maybeSingle();
     if (de) throw de;
     window._dom = true;
     if (d) SITE = d.id;
   }
-
+*/
 
 function titulo(s) {
   return String(s ?? '')
