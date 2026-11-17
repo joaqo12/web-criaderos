@@ -57,7 +57,7 @@ const SUPABASE_KEY = 'sb_publishable_Ugsbe8guq0pJFWiGiarZZQ__6JVV-Ix';
 const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 const $ = s => document.querySelector(s);
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
-let SITIOS = [], USUARIOS = {}; async function api(body) {   const { data, error } = await sb.functions.invoke('gestor', { body });   if (error) {     let m = error.message;     try { const j = await error.context.json(); if (j.error) m = j.error; } catch (_) {}     throw new Error(m);   }   return data; }
+let SITIOS = [], USUARIOS = {}, TEMAS_SITIO = {}; const ESTILOS = [['', 'Clásico'], ['cuadrado', 'Cuadrado'], ['redondeado', 'Redondeado'], ['hoja', 'Hoja'], ['editorial', 'Editorial']]; async function api(body) {   const { data, error } = await sb.functions.invoke('gestor', { body });   if (error) {     let m = error.message;     try { const j = await error.context.json(); if (j.error) m = j.error; } catch (_) {}     throw new Error(m);   }   return data; }
 
 async function iniciar() {
   const { data: { session } } = await sb.auth.getSession();
@@ -73,7 +73,7 @@ async function iniciar() {
   cargar();
 }
 
-async function cargar() {   try { USUARIOS = (await api({ action: 'listar' })).usuarios || {}; }   catch (e) { USUARIOS = {}; $('#msg').textContent = 'La función de servidor no respondió: ' + e.message; }
+async function cargar() {   try { const rt = await sb.from('site_settings').select('site_id, value').eq('key', 'tema'); TEMAS_SITIO = {}; (rt.data || []).forEach(x => { TEMAS_SITIO[x.site_id] = x.value; }); } catch (e) { TEMAS_SITIO = {}; }   try { USUARIOS = (await api({ action: 'listar' })).usuarios || {}; }   catch (e) { USUARIOS = {}; $('#msg').textContent = 'La función de servidor no respondió: ' + e.message; }
   const [s, a, n, u] = await Promise.all([
     sb.from('sites').select('*').order('created_at', { ascending: false }),
     sb.from('animals').select('site_id'),
@@ -106,7 +106,7 @@ function pintar() {
       </p>
       <div class="grid2">
         <label>Plan o precio<input data-f="plan" value="${esc(x.plan)}" placeholder="Ej: básico, 15000 por mes"/></label>
-        <label>Notas<textarea data-f="notas" rows="2" placeholder="Qué pidió, cuándo paga...">${esc(x.notas)}</textarea></label>         <label>Dominio del cliente (sin www)<input data-f="dominio" value="${esc(x.domain || '')}" placeholder="ej: cabanalaesperanza.com.ar"/></label>
+        <label>Notas<textarea data-f="notas" rows="2" placeholder="Qué pidió, cuándo paga...">${esc(x.notas)}</textarea></label>         <label>Dominio del cliente (sin www)<input data-f="dominio" value="${esc(x.domain || '')}" placeholder="ej: cabanalaesperanza.com.ar"/></label>         <label>Estilo de la web<select data-f="tema">${ESTILOS.map(([k, n]) => `<option value="${k}"${(TEMAS_SITIO[x.id] || '') === k ? ' selected' : ''}>${n}</option>`).join('')}</select></label>
       </div>
       <button data-guardar="1">Guardar plan y notas</button>
       <button data-toggle="1" class="${x.active ? 'rojo' : 'sec'}">${x.active ? 'Suspender' : 'Reactivar'}</button>
@@ -150,7 +150,7 @@ $('#lista').addEventListener('click', async e => {
     const { error } = await sb.from('site_admin').upsert(
       { site_id: id, plan: card.querySelector('[data-f=plan]').value.trim(), notes: card.querySelector('[data-f=notas]').value.trim() },
       { onConflict: 'site_id' });
-    let err2 = error;     if (!err2) {       const dom = (card.querySelector('[data-f=dominio]').value || '').trim().toLowerCase().replace(/^https?:\/\//, '').replace(/^www\./, '').replace(/\/.*$/, '');       const r = await sb.from('sites').update({ domain: dom || null }).eq('id', id);       err2 = r.error;     }     msg.textContent = err2 ? 'Error: ' + (err2.code === '23505' ? 'Ese dominio ya está asignado a otro cliente.' : err2.message) : 'Guardado.';
+    let err2 = error;     if (!err2) {       const dom = (card.querySelector('[data-f=dominio]').value || '').trim().toLowerCase().replace(/^https?:\/\//, '').replace(/^www\./, '').replace(/\/.*$/, '');       const r = await sb.from('sites').update({ domain: dom || null }).eq('id', id);       err2 = r.error;       if (!err2) {         const tm = card.querySelector('[data-f=tema]').value;         const r2 = tm           ? await sb.from('site_settings').upsert({ site_id: id, key: 'tema', value: tm, updated_at: new Date().toISOString() }, { onConflict: 'site_id,key' })           : await sb.from('site_settings').delete().eq('site_id', id).eq('key', 'tema');         err2 = r2.error;       }     }     msg.textContent = err2 ? 'Error: ' + (err2.code === '23505' ? 'Ese dominio ya está asignado a otro cliente.' : err2.message) : 'Guardado.';
     if (!err2) cargar();
   }
   if (e.target.dataset.toggle) {
