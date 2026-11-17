@@ -937,16 +937,16 @@ function filasDeFicha(fi, attrs) {
   return r;
 }
 
-/*
-  if (!window._dom && !new URLSearchParams(location.search).get('c')) {
+
+async function resolverDominio() {   if (!window._dom && !new URLSearchParams(location.search).get('c')) {
     const { data: d, error: de } = await _from('sites').select('id').eq('domain', location.hostname.replace(/^www\./, '')).maybeSingle();
     if (de) throw de;
     window._dom = true;
     if (d) SITE = d.id;
   }
-*/
 
-function titulo(s) {
+
+}  function titulo(s) {
   return String(s ?? '')
     .replace(/<br\s*\/?>/gi, '@@B@@')
     .replace(/<span class="accent-text[^"]*">/gi, '@@S@@')
@@ -992,7 +992,7 @@ function aplicarTema(t) {
   }
 }
   
-async function cargarDatosDesdeSupabase() {
+async function cargarDatosDesdeSupabase() {   await resolverDominio();
 
   if (new URLSearchParams(location.search).get('editar') !== '1') {
     const { data: ss } = await _from('sites').select('active').eq('id', SITE).maybeSingle();
