@@ -48,7 +48,7 @@
   </div>
   <label>Buscar<input id="buscar" placeholder="Nombre o código"/></label>
   <div id="msg" class="err"></div>
-  <div class="card">     <button id="n-toggle" class="sec" type="button">+ Nuevo cliente</button>     <div id="n-form" class="hidden">       <div class="grid2">         <label>Nombre de la cabaña<input id="n-name" placeholder="Cabaña La Esperanza"/></label>         <label>Código (para el enlace)<input id="n-id" placeholder="la-esperanza"/></label>         <label>Email del cliente<input id="n-email" type="email"/></label>         <label>Contraseña inicial<input id="n-pass"/></label>       </div>       <button id="n-gen" class="sec" type="button">Generar contraseña</button>       <button id="n-crear" type="button">Crear cliente</button>     </div>     <div id="n-out" style="margin-top:10px;font-size:13px"></div>   </div>   <div id="lista"></div>
+  <div class="card">     <button id="n-toggle" class="sec" type="button">+ Nuevo cliente</button>     <button id="dl-todos" class="sec" type="button">Descargar respaldo de todos</button>     <div id="n-form" class="hidden">       <div class="grid2">         <label>Nombre de la cabaña<input id="n-name" placeholder="Cabaña La Esperanza"/></label>         <label>Código (para el enlace)<input id="n-id" placeholder="la-esperanza"/></label>         <label>Email del cliente<input id="n-email" type="email"/></label>         <label>Contraseña inicial<input id="n-pass"/></label>       </div>       <button id="n-gen" class="sec" type="button">Generar contraseña</button>       <button id="n-crear" type="button">Crear cliente</button>     </div>     <div id="n-out" style="margin-top:10px;font-size:13px"></div>   </div>   <div id="lista"></div>
 </div>
 
 <script>
@@ -109,7 +109,7 @@ function pintar() {
         <label>Notas<textarea data-f="notas" rows="2" placeholder="Qué pidió, cuándo paga...">${esc(x.notas)}</textarea></label>         <label>Dominio del cliente (sin www)<input data-f="dominio" value="${esc(x.domain || '')}" placeholder="ej: cabanalaesperanza.com.ar"/></label>         <label>Estilo de la web<select data-f="tema">${ESTILOS.map(([k, n]) => `<option value="${k}"${(TEMAS_SITIO[x.id] || '') === k ? ' selected' : ''}>${n}</option>`).join('')}</select></label>
       </div>
       <button data-guardar="1">Guardar plan y notas</button>
-      <button data-toggle="1" class="${x.active ? 'rojo' : 'sec'}">${x.active ? 'Suspender' : 'Reactivar'}</button>
+      <button data-toggle="1" class="${x.active ? 'rojo' : 'sec'}">${x.active ? 'Suspender' : 'Reactivar'}</button>       <button data-dl="1" class="sec">Descargar datos</button>
     </div>`).join('') || '<p>No hay clientes.</p>';
 }
 
@@ -139,6 +139,27 @@ $('#n-crear').onclick = async () => {
 };
 
 
+async function descargarDatos(id) {
+  const tablas = ['sites', 'site_settings', 'animals', 'lots', 'gallery', 'partners', 'site_categories', 'site_admin'];
+  const out = { cliente: id, fecha: new Date().toISOString() };
+  for (const t of tablas) {
+    const r = await sb.from(t).select('*').eq(t === 'sites' ? 'id' : 'site_id', id);
+    if (r.error) throw new Error(t + ': ' + r.error.message);
+    out[t] = r.data;
+  }
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([JSON.stringify(out, null, 2)], { type: 'application/json' }));
+  a.download = 'respaldo-' + id + '-' + new Date().toISOString().slice(0, 10) + '.json';
+  a.click();
+  URL.revokeObjectURL(a.href);
+}
+$('#dl-todos').onclick = async () => {
+  const msg = $('#msg');
+  try { for (const s of SITIOS) { msg.textContent = 'Descargando ' + s.name + '...'; await descargarDatos(s.id); } msg.textContent = 'Listo: ' + SITIOS.length + ' archivos.'; }
+  catch (err) { msg.textContent = 'Error: ' + err.message; }
+};
+
+  
   
 $('#buscar').addEventListener('input', pintar);
 
@@ -146,7 +167,7 @@ $('#lista').addEventListener('click', async e => {
   const card = e.target.closest('.card'); if (!card) return;
   const id = card.dataset.id, msg = $('#msg');
   msg.textContent = '';
-  if (e.target.dataset.pw) {     const pw = prompt('Nueva contraseña (mínimo 8 caracteres):');     if (!pw) return;     try { await api({ action: 'password', user_id: e.target.dataset.pw, password: pw }); msg.textContent = 'Contraseña cambiada. La nueva es: ' + pw; }     catch (err) { msg.textContent = 'Error: ' + err.message; }     return;   }   if (e.target.dataset.guardar) {
+  if (e.target.dataset.dl) {     try { msg.textContent = 'Preparando...'; await descargarDatos(id); msg.textContent = 'Descarga lista.'; }     catch (err) { msg.textContent = 'Error: ' + err.message; }     return;   }   if (e.target.dataset.pw) {     const pw = prompt('Nueva contraseña (mínimo 8 caracteres):');     if (!pw) return;     try { await api({ action: 'password', user_id: e.target.dataset.pw, password: pw }); msg.textContent = 'Contraseña cambiada. La nueva es: ' + pw; }     catch (err) { msg.textContent = 'Error: ' + err.message; }     return;   }   if (e.target.dataset.guardar) {
     const { error } = await sb.from('site_admin').upsert(
       { site_id: id, plan: card.querySelector('[data-f=plan]').value.trim(), notes: card.querySelector('[data-f=notas]').value.trim() },
       { onConflict: 'site_id' });
